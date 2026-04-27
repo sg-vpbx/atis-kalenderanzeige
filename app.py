@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request, send_file
 from msal import ConfidentialClientApplication
 from dotenv import load_dotenv
 import requests
@@ -30,21 +30,26 @@ def get_token():
         raise RuntimeError(f"Token-Fehler: {result.get('error_description')}")
     return result["access_token"]
 
-def get_week_range():
+def get_week_range(offset=0, weeks=1):
     tz = pytz.timezone(TIMEZONE)
     now = datetime.now(tz)
     monday = now - timedelta(days=now.weekday())
     monday = monday.replace(hour=0, minute=0, second=0, microsecond=0)
-    sunday = monday + timedelta(days=7)
+    monday = monday + timedelta(weeks=offset)
+    end_day = monday + timedelta(weeks=weeks)
     monday_utc = monday.astimezone(pytz.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-    sunday_utc = sunday.astimezone(pytz.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-    return monday_utc, sunday_utc
+    end_utc = end_day.astimezone(pytz.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return monday_utc, end_utc
 
 @app.route("/api/events")
 def api_events():
     try:
+        offset = int(request.args.get("offset", 0))
+        weeks = int(request.args.get("weeks", 1))
+        weeks = max(1, min(weeks, 4))
+
         token = get_token()
-        start, end = get_week_range()
+        start, end = get_week_range(offset=offset, weeks=weeks)
         url = (
             f"https://graph.microsoft.com/v1.0/users/{CALENDAR_USER}/calendarView"
             f"?startDateTime={start}&endDateTime={end}"
@@ -76,7 +81,7 @@ def api_events():
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return send_file("index.html")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

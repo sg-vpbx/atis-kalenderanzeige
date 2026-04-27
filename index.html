@@ -6,68 +6,131 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; cursor: none !important; }
   html, body { height: 100%; font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
-               background: #1e1e2e; color: #e4e4e7; overflow: hidden; }
+               background: #f5f5f5; color: #1e1e2e; overflow: hidden; }
+
   header { display: flex; justify-content: space-between; align-items: center;
-           padding: 16px 28px; background: #181825; border-bottom: 2px solid #313244; }
-  header h1 { font-size: 26px; font-weight: 600; }
-  header .clock { font-size: 22px; font-variant-numeric: tabular-nums; color: #e4e4e7; }
-  header .status { font-size: 13px; color: #a6adc8; }
+           padding: 14px 28px; background: #ffffff; border-bottom: 2px solid #d0d0d0; }
+  header h1 { font-size: 32px; font-weight: 700; color: #1e1e2e; }
+  header .right { text-align: right; }
+  header .clock { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; color: #1e1e2e; }
+  header .status { font-size: 14px; color: #666; }
+  header .view-label { font-size: 16px; color: #444; margin-top: 2px; }
 
-  .grid { display: grid; grid-template-columns: 60px repeat(7, 1fr);
-          grid-template-rows: auto 1fr; height: calc(100vh - 70px); }
+  /* --- Single week view --- */
+  .grid { display: grid; grid-template-columns: 70px repeat(7, 1fr);
+          grid-template-rows: auto 1fr; height: calc(100vh - 72px); }
 
-  .day-header { padding: 10px 6px; text-align: center; background: #181825;
-                border-bottom: 1px solid #313244; border-left: 1px solid #313244;
+  .day-header { padding: 10px 6px; text-align: center; background: #ffffff;
+                border-bottom: 2px solid #d0d0d0; border-left: 1px solid #d0d0d0;
                 grid-row: 1; }
-  .day-header .name { font-weight: 600; font-size: 15px; }
-  .day-header .date { font-size: 13px; color: #e4e4e7; }
-  .day-header.today .name { color: #89b4fa; }
-  .day-header.today .date { color: #89b4fa; font-weight: 600; }
+  .day-header .name { font-weight: 700; font-size: 20px; color: #333; }
+  .day-header .date { font-size: 17px; color: #555; }
+  .day-header.today .name { color: #2563eb; }
+  .day-header.today .date { color: #2563eb; font-weight: 700; }
 
   .hours { grid-column: 1; grid-row: 2; display: grid;
            grid-template-rows: repeat(14, 1fr); }
-  .hour { font-size: 12px; color: #e4e4e7; text-align: right; padding-right: 6px;
-          border-top: 1px solid #313244; }
+  .hour { font-size: 15px; color: #555; text-align: right; padding-right: 8px;
+          border-top: 1px solid #d0d0d0; }
 
   .day-col { display: flex; flex-direction: column;
-             border-left: 1px solid #313244; grid-row: 2; }
+             border-left: 1px solid #d0d0d0; grid-row: 2; }
   .day-col-inner { position: relative; flex: 1;
                    background: repeating-linear-gradient(to bottom, transparent 0,
-                         transparent calc(100% / 14 - 1px), #313244 calc(100% / 14 - 1px),
-                         #313244 calc(100% / 14)); }
-  .day-col.today .day-col-inner { background-color: #252538;
+                         transparent calc(100% / 14 - 1px), #d0d0d0 calc(100% / 14 - 1px),
+                         #d0d0d0 calc(100% / 14)); }
+  .day-col.today .day-col-inner { background-color: #eef4ff;
                    background-image: repeating-linear-gradient(to bottom, transparent 0,
-                         transparent calc(100% / 14 - 1px), #313244 calc(100% / 14 - 1px),
-                         #313244 calc(100% / 14)); }
+                         transparent calc(100% / 14 - 1px), #d0d0d0 calc(100% / 14 - 1px),
+                         #d0d0d0 calc(100% / 14)); }
 
-  .event { position: absolute; border-radius: 5px; padding: 4px 6px; font-size: 12px;
-           overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  .event { position: absolute; border-radius: 5px; padding: 4px 6px; font-size: 15px;
+           overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
            background: #89b4fa; color: #1e1e2e;
-           border-left: 3px solid rgba(0,0,0,0.25); }
-  .event .subject { font-weight: 600; white-space: nowrap; overflow: hidden;
+           border-left: 3px solid rgba(0,0,0,0.2); }
+  .event .subject { font-weight: 700; white-space: nowrap; overflow: hidden;
                     text-overflow: ellipsis; }
-  .event .time { font-size: 11px; opacity: 0.85; }
-  .event .loc  { font-size: 11px; opacity: 0.75; white-space: nowrap;
+  .event .time { font-size: 13px; opacity: 0.8; }
+  .event .loc  { font-size: 13px; opacity: 0.7; white-space: nowrap;
                  overflow: hidden; text-overflow: ellipsis; }
 
   .allday-row { display: flex; gap: 2px; padding: 2px; flex-wrap: wrap; }
   .allday-row:empty { display: none; }
   .allday { background: #f9e2af; color: #1e1e2e; padding: 2px 6px;
-            border-radius: 3px; font-size: 11px; font-weight: 600; }
+            border-radius: 3px; font-size: 14px; font-weight: 700; }
 
   .now-line { position: absolute; left: 0; right: 0; height: 2px;
-              background: #f38ba8; z-index: 10; }
+              background: #dc2626; z-index: 10; }
   .now-line::before { content: ""; position: absolute; left: -5px; top: -4px;
-                      width: 10px; height: 10px; background: #f38ba8; border-radius: 50%; }
+                      width: 10px; height: 10px; background: #dc2626; border-radius: 50%; }
+
+  /* --- 4-week view (2x2 grid) --- */
+  .four-week-container { display: grid; grid-template-columns: 1fr 1fr;
+                         grid-template-rows: 1fr 1fr; height: calc(100vh - 72px);
+                         gap: 4px; padding: 4px; background: #e0e0e0; }
+
+  .mini-week { background: #fff; overflow: hidden; display: grid;
+               grid-template-columns: 40px repeat(7, 1fr);
+               grid-template-rows: auto auto 1fr; border-radius: 4px; }
+
+  .mini-week .week-title { grid-column: 1 / -1; grid-row: 1; padding: 4px 8px;
+                           font-size: 15px; font-weight: 700; background: #f0f0f0;
+                           border-bottom: 1px solid #d0d0d0; color: #333; }
+  .mini-week .week-title.current { background: #dbeafe; color: #1e40af; }
+
+  .mini-week .mini-day-header { padding: 2px 2px; text-align: center; background: #fafafa;
+                                border-bottom: 1px solid #d0d0d0; border-left: 1px solid #e0e0e0;
+                                grid-row: 2; }
+  .mini-week .mini-day-header .name { font-weight: 700; font-size: 12px; color: #333; }
+  .mini-week .mini-day-header .date { font-size: 11px; color: #666; }
+  .mini-week .mini-day-header.today .name,
+  .mini-week .mini-day-header.today .date { color: #2563eb; }
+
+  .mini-week .mini-corner { grid-column: 1; grid-row: 2; background: #fafafa;
+                            border-bottom: 1px solid #d0d0d0; }
+
+  .mini-week .mini-hours { grid-column: 1; grid-row: 3; display: grid;
+                           grid-template-rows: repeat(14, 1fr); }
+  .mini-week .mini-hours .hour { font-size: 10px; color: #888; text-align: right;
+                                  padding-right: 4px; border-top: 1px solid #e0e0e0; }
+
+  .mini-week .mini-day-col { display: flex; flex-direction: column;
+                             border-left: 1px solid #e0e0e0; grid-row: 3; }
+  .mini-week .mini-day-col-inner { position: relative; flex: 1;
+                                   background: repeating-linear-gradient(to bottom, transparent 0,
+                                         transparent calc(100% / 14 - 1px), #e8e8e8 calc(100% / 14 - 1px),
+                                         #e8e8e8 calc(100% / 14)); }
+  .mini-week .mini-day-col.today .mini-day-col-inner { background-color: #f0f6ff; }
+
+  .mini-week .mini-allday-row { display: flex; gap: 1px; padding: 1px; flex-wrap: wrap; }
+  .mini-week .mini-allday-row:empty { display: none; }
+  .mini-week .mini-allday { padding: 1px 3px; border-radius: 2px; font-size: 9px;
+                            font-weight: 700; color: #1e1e2e; }
+
+  .mini-week .mini-event { position: absolute; border-radius: 3px; padding: 1px 3px;
+                           font-size: 10px; overflow: hidden;
+                           box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                           color: #1e1e2e; border-left: 2px solid rgba(0,0,0,0.2); }
+  .mini-week .mini-event .subject { font-weight: 700; white-space: nowrap;
+                                    overflow: hidden; text-overflow: ellipsis; }
+
+  .mini-week .mini-now-line { position: absolute; left: 0; right: 0; height: 2px;
+                              background: #dc2626; z-index: 10; }
 </style>
 </head>
 <body>
   <header>
-    <h1>🪚 Schreinerei – Wochenkalender</h1>
-    <div class="clock" id="clock">--:--</div>
-    <div class="status" id="status">Lade …</div>
+    <h1>&#x1FA9A; Schreinerei – Wochenkalender</h1>
+    <div>
+      <div class="view-label" id="viewLabel">Aktuelle Woche</div>
+    </div>
+    <div class="right">
+      <div class="clock" id="clock">--:--</div>
+      <div class="status" id="status">Lade …</div>
+    </div>
   </header>
   <div class="grid" id="grid"></div>
+  <div class="four-week-container" id="fourWeekGrid" style="display:none;"></div>
 
 <script>
 const START_HOUR = 6;
@@ -93,6 +156,12 @@ const CATEGORY_COLORS = {
   "Teal category":   "#94e2d5",
 };
 
+// --- View state ---
+// 0 = current week, 1 = next week, 2 = four weeks
+const VIEWS = ["current", "next", "fourweek"];
+const VIEW_LABELS = ["Aktuelle Woche", "Nächste Woche", "4-Wochen-Übersicht"];
+let currentView = 0;
+
 function colorFor(event){
   for (const c of (event.categories || [])){
     if (CATEGORY_COLORS[c]) return CATEGORY_COLORS[c];
@@ -101,6 +170,7 @@ function colorFor(event){
 }
 
 function pad(n){ return String(n).padStart(2,"0"); }
+
 function updateClock(){
   const d = new Date();
   document.getElementById("clock").textContent =
@@ -153,17 +223,21 @@ function layoutColumns(events){
   return sorted;
 }
 
-function render(events){
+// --- Single week rendering ---
+function renderWeek(events, weekOffset){
   const grid = document.getElementById("grid");
   grid.innerHTML = "";
+  grid.style.display = "grid";
+  document.getElementById("fourWeekGrid").style.display = "none";
 
   const monday = mondayOfWeek(new Date());
+  monday.setDate(monday.getDate() + weekOffset * 7);
   const today = new Date(); today.setHours(0,0,0,0);
 
   const corner = document.createElement("div");
   corner.style.gridColumn = "1"; corner.style.gridRow = "1";
-  corner.style.background = "#181825";
-  corner.style.borderBottom = "1px solid #313244";
+  corner.style.background = "#ffffff";
+  corner.style.borderBottom = "2px solid #d0d0d0";
   grid.appendChild(corner);
 
   for (let d = 0; d < 7; d++){
@@ -260,18 +334,182 @@ function render(events){
   }
 }
 
+// --- 4-week rendering (2x2 grid) ---
+function renderFourWeeks(events){
+  const grid = document.getElementById("grid");
+  grid.style.display = "none";
+  grid.innerHTML = "";
+  const container = document.getElementById("fourWeekGrid");
+  container.style.display = "grid";
+  container.innerHTML = "";
+
+  const baseMonday = mondayOfWeek(new Date());
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  for (let w = 0; w < 4; w++){
+    const monday = new Date(baseMonday);
+    monday.setDate(baseMonday.getDate() + w * 7);
+
+    const miniWeek = document.createElement("div");
+    miniWeek.className = "mini-week";
+
+    // Week title
+    const isCurrentWeek = w === 0;
+    const weekEnd = new Date(monday); weekEnd.setDate(monday.getDate() + 6);
+    const title = document.createElement("div");
+    title.className = "week-title" + (isCurrentWeek ? " current" : "");
+    title.textContent = `KW ${getISOWeek(monday)} — ${pad(monday.getDate())}.${pad(monday.getMonth()+1)} – ${pad(weekEnd.getDate())}.${pad(weekEnd.getMonth()+1)}`;
+    miniWeek.appendChild(title);
+
+    // Corner
+    const corner = document.createElement("div");
+    corner.className = "mini-corner";
+    corner.style.gridColumn = "1";
+    miniWeek.appendChild(corner);
+
+    // Day headers
+    for (let d = 0; d < 7; d++){
+      const date = new Date(monday); date.setDate(monday.getDate()+d);
+      const isToday = date.getTime() === today.getTime();
+      const head = document.createElement("div");
+      head.className = "mini-day-header" + (isToday ? " today" : "");
+      head.style.gridColumn = (d+2);
+      head.innerHTML = `<div class="name">${DAYS_DE[d]}</div>
+                        <div class="date">${pad(date.getDate())}.${pad(date.getMonth()+1)}</div>`;
+      miniWeek.appendChild(head);
+    }
+
+    // Hours column
+    const hoursCol = document.createElement("div");
+    hoursCol.className = "mini-hours";
+    for (let h = START_HOUR; h < END_HOUR; h++){
+      const div = document.createElement("div");
+      div.className = "hour"; div.textContent = pad(h) + ":00";
+      hoursCol.appendChild(div);
+    }
+    miniWeek.appendChild(hoursCol);
+
+    // Day columns
+    for (let d = 0; d < 7; d++){
+      const date = new Date(monday); date.setDate(monday.getDate()+d);
+      const isToday = date.getTime() === today.getTime();
+
+      const col = document.createElement("div");
+      col.className = "mini-day-col" + (isToday ? " today" : "");
+      col.style.gridColumn = (d+2);
+
+      const alldayRow = document.createElement("div");
+      alldayRow.className = "mini-allday-row";
+      col.appendChild(alldayRow);
+
+      const inner = document.createElement("div");
+      inner.className = "mini-day-col-inner";
+      col.appendChild(inner);
+
+      const dayStart = new Date(date); dayStart.setHours(0,0,0,0);
+      const dayEnd   = new Date(date); dayEnd.setHours(23,59,59,999);
+
+      const dayEvents = events
+        .map(e => ({...e, _start: parseNaiveLocal(e.start), _end: parseNaiveLocal(e.end)}))
+        .filter(e => e._start >= dayStart && e._start <= dayEnd);
+
+      const allday = dayEvents.filter(e => e.isAllDay);
+      const timed  = dayEvents.filter(e => !e.isAllDay);
+
+      allday.forEach(e => {
+        const a = document.createElement("div");
+        a.className = "mini-allday"; a.textContent = e.subject;
+        a.style.background = colorFor(e);
+        alldayRow.appendChild(a);
+      });
+
+      const laid = layoutColumns(timed);
+
+      laid.forEach(e => {
+        const s = e._start, en = e._end;
+        const startFrac = (s.getHours() + s.getMinutes()/60) - START_HOUR;
+        const endFrac   = (en.getHours() + en.getMinutes()/60) - START_HOUR;
+        if (endFrac <= 0 || startFrac >= HOURS) return;
+        const top    = Math.max(0, startFrac) / HOURS * 100;
+        const height = (Math.min(endFrac, HOURS) - Math.max(0, startFrac)) / HOURS * 100;
+        const widthPct = 100 / e._cols;
+        const leftPct  = widthPct * e._col;
+
+        const ev = document.createElement("div");
+        ev.className = "mini-event";
+        ev.style.top    = `${top}%`;
+        ev.style.height = `calc(${height}% - 1px)`;
+        ev.style.left   = `calc(${leftPct}% + 1px)`;
+        ev.style.width  = `calc(${widthPct}% - 2px)`;
+        ev.style.background = colorFor(e);
+        ev.innerHTML = `<div class="subject">${e.subject}</div>`;
+        inner.appendChild(ev);
+      });
+
+      if (isToday){
+        const now = new Date();
+        const frac = (now.getHours() + now.getMinutes()/60) - START_HOUR;
+        if (frac >= 0 && frac <= HOURS){
+          const line = document.createElement("div");
+          line.className = "mini-now-line";
+          line.style.top = `${frac / HOURS * 100}%`;
+          inner.appendChild(line);
+        }
+      }
+
+      miniWeek.appendChild(col);
+    }
+
+    container.appendChild(miniWeek);
+  }
+}
+
+function getISOWeek(date){
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+// --- Data loading ---
 async function load(){
   try {
-    const r = await fetch("/api/events");
+    let url, offset, weeks;
+    if (currentView === 0) { offset = 0; weeks = 1; }
+    else if (currentView === 1) { offset = 1; weeks = 1; }
+    else { offset = 0; weeks = 4; }
+
+    url = `/api/events?offset=${offset}&weeks=${weeks}`;
+    const r = await fetch(url);
     const data = await r.json();
     if (!data.ok) throw new Error(data.error);
-    render(data.events);
+
+    if (currentView === 2){
+      renderFourWeeks(data.events);
+    } else {
+      renderWeek(data.events, currentView === 1 ? 1 : 0);
+    }
+
     document.getElementById("status").textContent =
       "Aktualisiert: " + new Date().toLocaleTimeString("de-CH");
+    document.getElementById("viewLabel").textContent = VIEW_LABELS[currentView];
   } catch(err){
     document.getElementById("status").textContent = "Fehler: " + err.message;
   }
 }
+
+// --- Arrow key navigation ---
+document.addEventListener("keydown", function(e){
+  if (e.key === "ArrowRight"){
+    e.preventDefault();
+    currentView = (currentView + 1) % 3;
+    load();
+  } else if (e.key === "ArrowLeft"){
+    e.preventDefault();
+    currentView = (currentView + 2) % 3;
+    load();
+  }
+});
 
 load();
 setInterval(load, 2 * 60 * 1000);
