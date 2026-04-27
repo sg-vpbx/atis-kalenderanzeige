@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<labwc_config>
+  <cursor>
+    <hideOnKeypress>yes</hideOnKeypress>
+    <hideInactive>yes</hideInactive>
+    <hideInactiveDelay>1</hideInactiveDelay>
+  </cursor>
+</labwc_config>

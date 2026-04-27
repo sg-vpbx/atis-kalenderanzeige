@@ -2,16 +2,27 @@
 
 Dokumentation für das Schreinerei-Kalender-Display auf Basis eines Raspberry Pi 4 und Microsoft 365.
 
+**Repository:** https://github.com/sg-vpbx/atis-kalenderanzeige
+
 ---
 
 ## 1. Überblick
 
 Ein Raspberry Pi 4 zeigt im Vollbild-Modus den Wochenkalender des Ressourcenpostfachs `schreinerei@atissa.ch` an. Die Anzeige aktualisiert sich automatisch alle zwei Minuten und startet ohne manuelles Zutun, sobald der Pi mit Strom versorgt wird.
 
+### Funktionen
+
+- **Aktuelle Woche** — Standardansicht mit 7-Tage-Kalender
+- **Nächste Woche** — Vorschau auf die kommende Woche
+- **4-Wochen-Übersicht** — 4 Wochen als 2×2-Grid (je ein Viertel des Displays)
+- **Pfeiltasten-Navigation** — Wechsel zwischen den Ansichten per Tastatur
+- **Kategorienfarben** — Termine farblich nach Outlook-Kategorie
+- **Live-Uhrzeit** und **"Jetzt"-Linie** im heutigen Tag
+
 ### Architektur
 
-- **Backend (Python/Flask):** Authentifiziert sich via Microsoft Graph API (Client Credentials Flow) und holt die Kalenderereignisse der aktuellen Woche
-- **Frontend (HTML/JavaScript):** Rendert einen Wochenkalender mit nebeneinander angeordneten Parallelterminen, Kategorienfarben und Live-Uhrzeit
+- **Backend (Python/Flask):** Authentifiziert sich via Microsoft Graph API (Client Credentials Flow) und holt die Kalenderereignisse
+- **Frontend (HTML/JavaScript):** Rendert den Kalender mit nebeneinander angeordneten Parallelterminen, Kategorienfarben und Live-Uhrzeit
 - **Chromium Kiosk:** Startet automatisch beim Boot und zeigt das Frontend im Vollbild
 - **systemd-Service:** Hält das Backend permanent am Laufen und startet es nach Reboots automatisch
 
@@ -97,31 +108,52 @@ Set-MailboxFolderPermission -Identity "schreinerei@atissa.ch:\Calendar" `
 
 ### Installierte Pakete
 
+System:
+
 ```
 python3-pip, python3-venv, python3-full, git,
-chromium, unclutter, swayidle
+chromium, swayidle
 ```
 
-Python-Pakete (in `~/kalender-display/venv`):
+Python (in `venv`):
 
 ```
-flask, msal, requests, python-dateutil, pytz, python-dotenv
+flask, msal, requests, pytz, python-dotenv
 ```
 
 ---
 
 ## 4. Projekt-Struktur
 
+### Repository
+
+```
+atis-kalenderanzeige/
+├── app.py                    # Flask Backend
+├── index.html                # Wochenkalender-Frontend
+├── requirements.txt          # Python-Abhängigkeiten
+├── install.sh                # Automatisches Installations-Script
+├── .env.example              # Vorlage für Zugangsdaten
+├── config/
+│   ├── kalender.service      # systemd-Service
+│   ├── labwc-autostart       # Chromium Kiosk-Autostart
+│   ├── labwc-rc.xml          # Cursor-Verhalten
+│   └── kiosk-policy.json     # Chromium-Policies
+└── kalender-display-dokumentation.md
+```
+
+### Auf dem Raspberry Pi
+
 ```
 /home/admin/kalender-display/
 ├── .env                      # Azure-Zugangsdaten (chmod 600)
 ├── app.py                    # Flask Backend
-├── venv/                     # Python Virtual Environment
-└── templates/
-    └── index.html            # Wochenkalender-Frontend
+├── index.html                # Wochenkalender-Frontend
+├── requirements.txt          # Python-Abhängigkeiten
+└── venv/                     # Python Virtual Environment
 ```
 
-### Wichtige Systemdateien
+### Systemdateien (vom Install-Script angelegt)
 
 ```
 /etc/systemd/system/kalender.service          # Backend-Service
@@ -132,7 +164,104 @@ flask, msal, requests, python-dateutil, pytz, python-dotenv
 
 ---
 
-## 5. Konfigurationsdateien
+## 5. Installation
+
+### Schnellinstallation (empfohlen)
+
+Auf dem Raspberry Pi als User `admin`:
+
+```bash
+# Repository klonen
+cd ~
+git clone https://github.com/sg-vpbx/atis-kalenderanzeige.git kalender-display
+cd kalender-display
+
+# Zugangsdaten eintragen
+cp .env.example .env
+nano .env
+# → TENANT_ID, CLIENT_ID, CLIENT_SECRET eintragen
+
+# Installation starten
+chmod +x install.sh
+./install.sh
+
+# Neustart
+sudo reboot
+```
+
+Nach dem Reboot startet der Kalender automatisch im Vollbild.
+
+### Manuelle Installation
+
+Falls das Install-Script nicht verwendet wird:
+
+1. **Pakete installieren:**
+   ```bash
+   sudo apt-get update
+   sudo apt-get install -y python3-pip python3-venv python3-full git chromium swayidle
+   ```
+
+2. **Repository klonen und venv einrichten:**
+   ```bash
+   cd ~
+   git clone https://github.com/sg-vpbx/atis-kalenderanzeige.git kalender-display
+   cd kalender-display
+   python3 -m venv venv
+   venv/bin/pip install -r requirements.txt
+   ```
+
+3. **Zugangsdaten:**
+   ```bash
+   cp .env.example .env
+   nano .env
+   chmod 600 .env
+   ```
+
+4. **systemd-Service:**
+   ```bash
+   sudo cp config/kalender.service /etc/systemd/system/
+   sudo systemctl daemon-reload
+   sudo systemctl enable kalender.service
+   sudo systemctl start kalender.service
+   ```
+
+5. **labwc Konfiguration:**
+   ```bash
+   mkdir -p ~/.config/labwc
+   cp config/labwc-autostart ~/.config/labwc/autostart
+   chmod +x ~/.config/labwc/autostart
+   cp config/labwc-rc.xml ~/.config/labwc/rc.xml
+   ```
+
+6. **Chromium Policies:**
+   ```bash
+   sudo mkdir -p /etc/chromium/policies/managed
+   sudo cp config/kiosk-policy.json /etc/chromium/policies/managed/
+   ```
+
+7. **Screen Blanking deaktivieren:**
+   ```bash
+   sudo raspi-config nonint do_blanking 1
+   ```
+
+8. **Neustart:**
+   ```bash
+   sudo reboot
+   ```
+
+### Update vom Git-Repository
+
+```bash
+cd ~/kalender-display
+git pull
+sudo systemctl restart kalender.service
+# Browser lädt automatisch nach spätestens 1 Stunde neu,
+# oder F5 drücken für sofortigen Reload
+```
+
+---
+
+## 6. Konfigurationsdateien
 
 ### `.env`
 
@@ -145,80 +274,43 @@ CALENDAR_USER=schreinerei@atissa.ch
 
 Rechte: `chmod 600 .env` (nur `admin` kann lesen).
 
-### `/etc/systemd/system/kalender.service`
+### `config/kalender.service`
 
-```ini
-[Unit]
-Description=Kalender Backend
-After=network-online.target
-Wants=network-online.target
+systemd-Service-Definition. Startet das Flask-Backend beim Boot und hält es am Laufen.
 
-[Service]
-Type=simple
-User=admin
-WorkingDirectory=/home/admin/kalender-display
-EnvironmentFile=/home/admin/kalender-display/.env
-ExecStart=/home/admin/kalender-display/venv/bin/python /home/admin/kalender-display/app.py
-Restart=always
-RestartSec=10
+### `config/labwc-autostart`
 
-[Install]
-WantedBy=multi-user.target
-```
+Startet nach 15 Sekunden Boot-Verzögerung Chromium im Kiosk-Modus. Deaktiviert Screen-Standby via `swayidle`.
 
-### `~/.config/labwc/autostart`
+### `config/labwc-rc.xml`
 
-```bash
-# Bildschirm nicht in Standby schicken
-swayidle -w timeout 1 'echo idle_disabled' &
+Versteckt den Maus-Cursor nach 1 Sekunde Inaktivität und bei Tastatureingaben.
 
-# 15 Sekunden warten, dann Chromium im Kiosk-Modus starten
-(sleep 15 && chromium \
-  --kiosk \
-  --noerrdialogs \
-  --disable-infobars \
-  --disable-session-crashed-bubble \
-  --disable-features=Translate,TranslateUI \
-  --disable-translate \
-  --no-first-run \
-  --no-default-browser-check \
-  --check-for-update-interval=31536000 \
-  --start-fullscreen \
-  --password-store=basic \
-  --lang=de-CH \
-  http://localhost:5000) &
-```
+### `config/kiosk-policy.json`
 
-### `~/.config/labwc/rc.xml`
-
-```xml
-<?xml version="1.0" ?>
-<labwc_config>
-  <cursor>
-    <hideOnKeypress>yes</hideOnKeypress>
-    <hideInactive>yes</hideInactive>
-    <hideInactiveDelay>1</hideInactiveDelay>
-  </cursor>
-</labwc_config>
-```
-
-### `/etc/chromium/policies/managed/kiosk-policy.json`
-
-```json
-{
-  "TranslateEnabled": false,
-  "DefaultBrowserSettingEnabled": false,
-  "MetricsReportingEnabled": false
-}
-```
+Deaktiviert Chromium-Features die im Kiosk-Modus stören (Übersetzung, Standardbrowser-Abfrage, Telemetrie).
 
 ---
 
-## 6. Betrieb & Bedienung
+## 7. Betrieb & Bedienung
+
+### Ansichten
+
+| Ansicht | Beschreibung |
+|---|---|
+| Aktuelle Woche | Standardansicht, Montag bis Sonntag der aktuellen Woche |
+| Nächste Woche | Vorschau auf die kommende Woche |
+| 4-Wochen-Übersicht | 4 Wochen als 2×2-Grid, je ein Viertel des Displays |
+
+### Navigation (Pfeiltasten)
+
+- **Pfeiltaste rechts:** Aktuelle Woche → Nächste Woche → 4-Wochen → Aktuelle Woche
+- **Pfeiltaste links:** Aktuelle Woche → 4-Wochen → Nächste Woche → Aktuelle Woche
+
+Die aktuelle Ansicht wird im Header angezeigt.
 
 ### Anzeigezeit
 
-- Wochenansicht Montag bis Sonntag
 - Zeitbereich: **6:00 bis 20:00 Uhr** (konfigurierbar in `index.html` via `START_HOUR` und `END_HOUR`)
 - Live-Anzeige der aktuellen Uhrzeit oben rechts
 - "Jetzt"-Linie (rot) im heutigen Tag
@@ -257,7 +349,7 @@ Im Frontend sind folgende Outlook-Standardkategorien mit Farben verknüpft:
 
 Termine ohne Kategorie werden standardmässig blau dargestellt.
 
-**Eigene Kategorien hinzufügen:** In `templates/index.html` das `CATEGORY_COLORS`-Objekt erweitern:
+**Eigene Kategorien hinzufügen:** In `index.html` das `CATEGORY_COLORS`-Objekt erweitern:
 
 ```javascript
 const CATEGORY_COLORS = {
@@ -268,7 +360,7 @@ const CATEGORY_COLORS = {
 
 ---
 
-## 7. Wartung & Troubleshooting
+## 8. Wartung & Troubleshooting
 
 ### Status prüfen
 
@@ -320,7 +412,7 @@ sudo reboot
 sudo systemctl restart kalender.service
 ```
 
-**Nach Änderungen in `templates/index.html`:**
+**Nach Änderungen in `index.html`:**
 Kein Neustart nötig — im Browser einfach F5 drücken oder den nächsten automatischen Reload abwarten (max. 1 Stunde).
 
 **Nach Änderungen in `.env`:**
@@ -343,7 +435,7 @@ sudo systemctl restart kalender.service
 
 ---
 
-## 8. Wichtige Termine
+## 9. Wichtige Termine
 
 ### Client Secret Ablauf
 
@@ -358,7 +450,7 @@ Bei Ablauf schlägt die Authentifizierung fehl und das Display zeigt einen Fehle
 
 ---
 
-## 9. Sicherheit
+## 10. Sicherheit
 
 ### Was gut geschützt ist
 
@@ -376,7 +468,7 @@ Bei Ablauf schlägt die Authentifizierung fehl und das Display zeigt einen Fehle
 
 ---
 
-## 10. Stromausfall & Datensicherheit
+## 11. Stromausfall & Datensicherheit
 
 Der Pi ist eine reine Anzeige — **alle Kalenderdaten liegen bei Microsoft**, nicht lokal. Bei einem Stromausfall können nur Systemdateien auf der SD-Karte beschädigt werden.
 
@@ -388,7 +480,7 @@ Der Pi ist eine reine Anzeige — **alle Kalenderdaten liegen bei Microsoft**, n
 
 ---
 
-## 11. Quick Reference
+## 12. Quick Reference
 
 ### SSH-Zugriff
 ```bash
@@ -410,6 +502,8 @@ sudo journalctl -u kalender.service --since "1 hour ago"
 ```
 
 ### Browser im Kiosk steuern (mit Tastatur am Pi)
+- **Pfeiltaste rechts** — Nächste Ansicht
+- **Pfeiltaste links** — Vorherige Ansicht
 - **F5** — Seite neu laden
 - **F11** — Vollbild toggeln
 - **Alt+F4** — Chromium schliessen (Autostart bringt ihn beim Reboot zurück)
@@ -427,8 +521,9 @@ http://<Pi-IP>:5000
 
 ---
 
-## 12. Kontakte & Ressourcen
+## 13. Kontakte & Ressourcen
 
+- **Repository:** https://github.com/sg-vpbx/atis-kalenderanzeige
 - **Microsoft Graph API Docs:** https://learn.microsoft.com/en-us/graph/api/calendar-list-calendarview
 - **Azure Portal:** https://portal.azure.com
 - **Microsoft 365 Admin Center:** https://admin.microsoft.com

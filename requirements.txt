@@ -1,0 +1,5 @@
+flask
+msal
+requests
+pytz
+python-dotenv

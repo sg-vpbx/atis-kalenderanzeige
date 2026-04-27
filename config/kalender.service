@@ -1,0 +1,16 @@
+[Unit]
+Description=Kalender Backend
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=admin
+WorkingDirectory=/home/admin/kalender-display
+EnvironmentFile=/home/admin/kalender-display/.env
+ExecStart=/home/admin/kalender-display/venv/bin/python /home/admin/kalender-display/app.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

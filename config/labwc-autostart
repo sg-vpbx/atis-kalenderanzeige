@@ -1,0 +1,18 @@
+# Bildschirm nicht in Standby schicken
+swayidle -w timeout 1 'echo idle_disabled' &
+
+# 15 Sekunden warten, dann Chromium im Kiosk-Modus starten
+(sleep 15 && chromium \
+  --kiosk \
+  --noerrdialogs \
+  --disable-infobars \
+  --disable-session-crashed-bubble \
+  --disable-features=Translate,TranslateUI \
+  --disable-translate \
+  --no-first-run \
+  --no-default-browser-check \
+  --check-for-update-interval=31536000 \
+  --start-fullscreen \
+  --password-store=basic \
+  --lang=de-CH \
+  http://localhost:5000) &
