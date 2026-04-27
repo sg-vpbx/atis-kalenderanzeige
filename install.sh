@@ -31,7 +31,34 @@ echo "============================================="
 echo ""
 
 # =============================================================================
-# 1. Systempakete installieren
+# 1. Raspberry Pi Grundkonfiguration
+# =============================================================================
+info "Raspberry Pi Grundkonfiguration..."
+if command -v raspi-config &> /dev/null; then
+    # Desktop-Modus mit Auto-Login aktivieren
+    sudo raspi-config nonint do_boot_behaviour B4
+    ok "Boot-Modus: Desktop GUI mit Auto-Login"
+
+    # Zeitzone setzen
+    sudo timedatectl set-timezone Europe/Zurich
+    ok "Zeitzone: Europe/Zurich"
+
+    # Tastaturlayout Schweiz
+    sudo raspi-config nonint do_configure_keyboard ch 2>/dev/null || true
+    ok "Tastaturlayout: ch"
+
+    # Screen Blanking deaktivieren
+    sudo raspi-config nonint do_blanking 1 2>/dev/null || true
+    ok "Screen Blanking deaktiviert"
+else
+    warn "raspi-config nicht gefunden — Pi-Grundkonfiguration manuell vornehmen"
+    warn "  → Boot: Desktop GUI + Auto-Login"
+    warn "  → Zeitzone: Europe/Zurich"
+    warn "  → Tastatur: ch"
+fi
+
+# =============================================================================
+# 2. Systempakete installieren
 # =============================================================================
 info "Systempakete installieren..."
 sudo apt-get update -qq
@@ -39,7 +66,7 @@ sudo apt-get install -y -qq python3-pip python3-venv python3-full git chromium s
 ok "Systempakete installiert"
 
 # =============================================================================
-# 2. Projektverzeichnis einrichten
+# 3. Projektverzeichnis einrichten
 # =============================================================================
 info "Projektverzeichnis einrichten..."
 if [ "$SCRIPT_DIR" != "$APP_DIR" ]; then
@@ -53,7 +80,7 @@ else
 fi
 
 # =============================================================================
-# 3. .env prüfen
+# 4. .env prüfen
 # =============================================================================
 if [ ! -f "$APP_DIR/.env" ]; then
     if [ -f "$SCRIPT_DIR/.env" ]; then
@@ -68,7 +95,7 @@ chmod 600 "$APP_DIR/.env"
 ok ".env vorhanden (chmod 600)"
 
 # =============================================================================
-# 4. Python Virtual Environment & Abhängigkeiten
+# 5. Python Virtual Environment & Abhängigkeiten
 # =============================================================================
 info "Python venv einrichten..."
 if [ ! -d "$APP_DIR/venv" ]; then
@@ -79,7 +106,7 @@ fi
 ok "Python-Abhängigkeiten installiert"
 
 # =============================================================================
-# 5. systemd-Service einrichten
+# 6. systemd-Service einrichten
 # =============================================================================
 info "systemd-Service einrichten..."
 sudo cp "$SCRIPT_DIR/config/kalender.service" /etc/systemd/system/kalender.service
@@ -89,7 +116,7 @@ sudo systemctl restart kalender.service
 ok "kalender.service aktiviert und gestartet"
 
 # =============================================================================
-# 6. labwc Konfiguration (Autostart + Cursor)
+# 7. labwc Konfiguration (Autostart + Cursor)
 # =============================================================================
 info "labwc Konfiguration einrichten..."
 LABWC_DIR="/home/$USER/.config/labwc"
@@ -109,23 +136,12 @@ cp "$SCRIPT_DIR/config/labwc-rc.xml" "$LABWC_DIR/rc.xml"
 ok "labwc Autostart und Cursor-Config installiert"
 
 # =============================================================================
-# 7. Chromium Kiosk-Policies
+# 8. Chromium Kiosk-Policies
 # =============================================================================
 info "Chromium Policies einrichten..."
 sudo mkdir -p /etc/chromium/policies/managed
 sudo cp "$SCRIPT_DIR/config/kiosk-policy.json" /etc/chromium/policies/managed/kiosk-policy.json
 ok "Chromium Kiosk-Policies installiert"
-
-# =============================================================================
-# 8. Screen Blanking deaktivieren
-# =============================================================================
-info "Screen Blanking prüfen..."
-if command -v raspi-config &> /dev/null; then
-    sudo raspi-config nonint do_blanking 1 2>/dev/null || true
-    ok "Screen Blanking deaktiviert"
-else
-    warn "raspi-config nicht gefunden — Screen Blanking manuell deaktivieren"
-fi
 
 # =============================================================================
 # 9. Backend-Test
