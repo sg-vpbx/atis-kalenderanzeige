@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Schreinerei-Wochenkalender</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; cursor: none !important; }
+  html, body { height: 100%; font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+               background: #1e1e2e; color: #e4e4e7; overflow: hidden; }
+  header { display: flex; justify-content: space-between; align-items: center;
+           padding: 16px 28px; background: #181825; border-bottom: 2px solid #313244; }
+  header h1 { font-size: 26px; font-weight: 600; }
+  header .clock { font-size: 22px; font-variant-numeric: tabular-nums; color: #e4e4e7; }
+  header .status { font-size: 13px; color: #a6adc8; }
+
+  .grid { display: grid; grid-template-columns: 60px repeat(7, 1fr);
+          grid-template-rows: auto 1fr; height: calc(100vh - 70px); }
+
+  .day-header { padding: 10px 6px; text-align: center; background: #181825;
+                border-bottom: 1px solid #313244; border-left: 1px solid #313244;
+                grid-row: 1; }
+  .day-header .name { font-weight: 600; font-size: 15px; }
+  .day-header .date { font-size: 13px; color: #e4e4e7; }
+  .day-header.today .name { color: #89b4fa; }
+  .day-header.today .date { color: #89b4fa; font-weight: 600; }
+
+  .hours { grid-column: 1; grid-row: 2; display: grid;
+           grid-template-rows: repeat(14, 1fr); }
+  .hour { font-size: 12px; color: #e4e4e7; text-align: right; padding-right: 6px;
+          border-top: 1px solid #313244; }
+
+  .day-col { display: flex; flex-direction: column;
+             border-left: 1px solid #313244; grid-row: 2; }
+  .day-col-inner { position: relative; flex: 1;
+                   background: repeating-linear-gradient(to bottom, transparent 0,
+                         transparent calc(100% / 14 - 1px), #313244 calc(100% / 14 - 1px),
+                         #313244 calc(100% / 14)); }
+  .day-col.today .day-col-inner { background-color: #252538;
+                   background-image: repeating-linear-gradient(to bottom, transparent 0,
+                         transparent calc(100% / 14 - 1px), #313244 calc(100% / 14 - 1px),
+                         #313244 calc(100% / 14)); }
+
+  .event { position: absolute; border-radius: 5px; padding: 4px 6px; font-size: 12px;
+           overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+           background: #89b4fa; color: #1e1e2e;
+           border-left: 3px solid rgba(0,0,0,0.25); }
+  .event .subject { font-weight: 600; white-space: nowrap; overflow: hidden;
+                    text-overflow: ellipsis; }
+  .event .time { font-size: 11px; opacity: 0.85; }
+  .event .loc  { font-size: 11px; opacity: 0.75; white-space: nowrap;
+                 overflow: hidden; text-overflow: ellipsis; }
+
+  .allday-row { display: flex; gap: 2px; padding: 2px; flex-wrap: wrap; }
+  .allday-row:empty { display: none; }
+  .allday { background: #f9e2af; color: #1e1e2e; padding: 2px 6px;
+            border-radius: 3px; font-size: 11px; font-weight: 600; }
+
+  .now-line { position: absolute; left: 0; right: 0; height: 2px;
+              background: #f38ba8; z-index: 10; }
+  .now-line::before { content: ""; position: absolute; left: -5px; top: -4px;
+                      width: 10px; height: 10px; background: #f38ba8; border-radius: 50%; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>🪚 Schreinerei – Wochenkalender</h1>
+    <div class="clock" id="clock">--:--</div>
+    <div class="status" id="status">Lade …</div>
+  </header>
+  <div class="grid" id="grid"></div>
+
+<script>
+const START_HOUR = 6;
+const END_HOUR   = 20;
+const HOURS      = END_HOUR - START_HOUR;
+const DAYS_DE    = ["Mo","Di","Mi","Do","Fr","Sa","So"];
+
+const CATEGORY_COLORS = {
+  "Rot":       "#f38ba8",
+  "Orange":    "#fab387",
+  "Gelb":      "#f9e2af",
+  "Grün":      "#a6e3a1",
+  "Blau":      "#89b4fa",
+  "Violett":   "#cba6f7",
+  "Türkis":    "#94e2d5",
+  "Grau":      "#a6adc8",
+  "Red category":    "#f38ba8",
+  "Orange category": "#fab387",
+  "Yellow category": "#f9e2af",
+  "Green category":  "#a6e3a1",
+  "Blue category":   "#89b4fa",
+  "Purple category": "#cba6f7",
+  "Teal category":   "#94e2d5",
+};
+
+function colorFor(event){
+  for (const c of (event.categories || [])){
+    if (CATEGORY_COLORS[c]) return CATEGORY_COLORS[c];
+  }
+  return "#89b4fa";
+}
+
+function pad(n){ return String(n).padStart(2,"0"); }
+function updateClock(){
+  const d = new Date();
+  document.getElementById("clock").textContent =
+    `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+setInterval(updateClock, 1000); updateClock();
+
+function mondayOfWeek(d){
+  const x = new Date(d);
+  const day = (x.getDay() + 6) % 7;
+  x.setHours(0,0,0,0); x.setDate(x.getDate()-day);
+  return x;
+}
+
+function parseNaiveLocal(str){
+  const m = str.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (!m) return new Date(str);
+  return new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5]);
+}
+
+function layoutColumns(events){
+  const sorted = events.slice().sort((a,b) =>
+    a._start - b._start || b._end - a._end);
+  const columns = [];
+  for (const e of sorted){
+    let placed = false;
+    for (let i = 0; i < columns.length; i++){
+      if (columns[i] <= e._start){
+        e._col = i;
+        columns[i] = e._end;
+        placed = true; break;
+      }
+    }
+    if (!placed){ e._col = columns.length; columns.push(e._end); }
+  }
+  const clusters = [];
+  let current = [], currentEnd = 0;
+  for (const e of sorted){
+    if (!current.length || e._start < currentEnd){
+      current.push(e); currentEnd = Math.max(currentEnd, e._end);
+    } else {
+      clusters.push(current); current = [e]; currentEnd = e._end;
+    }
+  }
+  if (current.length) clusters.push(current);
+  for (const cl of clusters){
+    const maxCol = Math.max(...cl.map(e => e._col)) + 1;
+    cl.forEach(e => e._cols = maxCol);
+  }
+  return sorted;
+}
+
+function render(events){
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+
+  const monday = mondayOfWeek(new Date());
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  const corner = document.createElement("div");
+  corner.style.gridColumn = "1"; corner.style.gridRow = "1";
+  corner.style.background = "#181825";
+  corner.style.borderBottom = "1px solid #313244";
+  grid.appendChild(corner);
+
+  for (let d = 0; d < 7; d++){
+    const date = new Date(monday); date.setDate(monday.getDate()+d);
+    const isToday = date.getTime() === today.getTime();
+    const head = document.createElement("div");
+    head.className = "day-header" + (isToday ? " today" : "");
+    head.style.gridColumn = (d+2); head.style.gridRow = 1;
+    head.innerHTML = `<div class="name">${DAYS_DE[d]}</div>
+                      <div class="date">${pad(date.getDate())}.${pad(date.getMonth()+1)}</div>`;
+    grid.appendChild(head);
+  }
+
+  const hoursCol = document.createElement("div");
+  hoursCol.className = "hours";
+  for (let h = START_HOUR; h < END_HOUR; h++){
+    const div = document.createElement("div");
+    div.className = "hour"; div.textContent = pad(h) + ":00";
+    hoursCol.appendChild(div);
+  }
+  grid.appendChild(hoursCol);
+
+  for (let d = 0; d < 7; d++){
+    const date = new Date(monday); date.setDate(monday.getDate()+d);
+    const isToday = date.getTime() === today.getTime();
+
+    const col = document.createElement("div");
+    col.className = "day-col" + (isToday ? " today" : "");
+    col.style.gridColumn = (d+2);
+
+    const alldayRow = document.createElement("div");
+    alldayRow.className = "allday-row";
+    col.appendChild(alldayRow);
+
+    const inner = document.createElement("div");
+    inner.className = "day-col-inner";
+    col.appendChild(inner);
+
+    const dayStart = new Date(date); dayStart.setHours(0,0,0,0);
+    const dayEnd   = new Date(date); dayEnd.setHours(23,59,59,999);
+
+    const dayEvents = events
+      .map(e => ({...e, _start: parseNaiveLocal(e.start), _end: parseNaiveLocal(e.end)}))
+      .filter(e => e._start >= dayStart && e._start <= dayEnd);
+
+    const allday = dayEvents.filter(e => e.isAllDay);
+    const timed  = dayEvents.filter(e => !e.isAllDay);
+
+    allday.forEach(e => {
+      const a = document.createElement("div");
+      a.className = "allday"; a.textContent = e.subject;
+      a.style.background = colorFor(e);
+      alldayRow.appendChild(a);
+    });
+
+    const laid = layoutColumns(timed);
+
+    laid.forEach(e => {
+      const s = e._start, en = e._end;
+      const startFrac = (s.getHours() + s.getMinutes()/60) - START_HOUR;
+      const endFrac   = (en.getHours() + en.getMinutes()/60) - START_HOUR;
+      if (endFrac <= 0 || startFrac >= HOURS) return;
+      const top    = Math.max(0, startFrac) / HOURS * 100;
+      const height = (Math.min(endFrac, HOURS) - Math.max(0, startFrac)) / HOURS * 100;
+      const widthPct = 100 / e._cols;
+      const leftPct  = widthPct * e._col;
+
+      const ev = document.createElement("div");
+      ev.className = "event";
+      ev.style.top    = `${top}%`;
+      ev.style.height = `calc(${height}% - 2px)`;
+      ev.style.left   = `calc(${leftPct}% + 2px)`;
+      ev.style.width  = `calc(${widthPct}% - 4px)`;
+      ev.style.background = colorFor(e);
+      ev.innerHTML = `
+        <div class="subject">${e.subject}</div>
+        <div class="time">${pad(s.getHours())}:${pad(s.getMinutes())}–${pad(en.getHours())}:${pad(en.getMinutes())}</div>
+        ${e.location ? `<div class="loc">📍 ${e.location}</div>` : ""}`;
+      inner.appendChild(ev);
+    });
+
+    if (isToday){
+      const now = new Date();
+      const frac = (now.getHours() + now.getMinutes()/60) - START_HOUR;
+      if (frac >= 0 && frac <= HOURS){
+        const line = document.createElement("div");
+        line.className = "now-line";
+        line.style.top = `${frac / HOURS * 100}%`;
+        inner.appendChild(line);
+      }
+    }
+
+    grid.appendChild(col);
+  }
+}
+
+async function load(){
+  try {
+    const r = await fetch("/api/events");
+    const data = await r.json();
+    if (!data.ok) throw new Error(data.error);
+    render(data.events);
+    document.getElementById("status").textContent =
+      "Aktualisiert: " + new Date().toLocaleTimeString("de-CH");
+  } catch(err){
+    document.getElementById("status").textContent = "Fehler: " + err.message;
+  }
+}
+
+load();
+setInterval(load, 2 * 60 * 1000);
+setInterval(() => location.reload(), 60 * 60 * 1000);
+</script>
+</body>
+</html>
