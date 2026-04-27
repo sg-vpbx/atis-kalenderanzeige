@@ -1,0 +1,3 @@
+# Cursor so klein wie möglich machen (1px) als Fallback,
+# falls cursor:none im CSS nicht greift (z.B. vor Chromium-Start)
+XCURSOR_SIZE=1

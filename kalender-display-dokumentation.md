@@ -134,10 +134,12 @@ atis-kalenderanzeige/
 ├── requirements.txt          # Python-Abhängigkeiten
 ├── install.sh                # Automatisches Installations-Script
 ├── .env.example              # Vorlage für Zugangsdaten
+├── protect.sh                # SD-Karten-Schutz (lock/unlock)
 ├── config/
 │   ├── kalender.service      # systemd-Service
 │   ├── labwc-autostart       # Chromium Kiosk-Autostart
-│   ├── labwc-rc.xml          # Cursor-Verhalten
+│   ├── labwc-environment     # Cursor-Grösse (1px Fallback)
+│   ├── labwc-rc.xml          # labwc Basis-Config
 │   └── kiosk-policy.json     # Chromium-Policies
 └── kalender-display-dokumentation.md
 ```
@@ -282,9 +284,13 @@ systemd-Service-Definition. Startet das Flask-Backend beim Boot und hält es am 
 
 Startet nach 15 Sekunden Boot-Verzögerung Chromium im Kiosk-Modus. Deaktiviert Screen-Standby via `swayidle`.
 
+### `config/labwc-environment`
+
+Setzt `XCURSOR_SIZE=1` — macht den Cursor systemweit so klein wie möglich (1 Pixel). Dient als Fallback, falls der CSS-basierte Cursor-Hiding nicht greift (z.B. in den 15 Sekunden vor dem Chromium-Start). Innerhalb von Chromium wird der Cursor über die CSS-Regel `cursor: none !important` in `index.html` komplett versteckt.
+
 ### `config/labwc-rc.xml`
 
-Versteckt den Maus-Cursor nach 1 Sekunde Inaktivität und bei Tastatureingaben.
+Basis-Konfiguration für labwc. Cursor-Hiding wird **nicht** über rc.xml gesteuert (labwc unterstützt keine Cursor-Optionen in rc.xml), sondern über die `environment`-Datei und CSS.
 
 ### `config/kiosk-policy.json`
 
@@ -468,15 +474,48 @@ Bei Ablauf schlägt die Authentifizierung fehl und das Display zeigt einen Fehle
 
 ---
 
-## 11. Stromausfall & Datensicherheit
+## 11. SD-Karten-Schutz (OverlayFS)
 
-Der Pi ist eine reine Anzeige — **alle Kalenderdaten liegen bei Microsoft**, nicht lokal. Bei einem Stromausfall können nur Systemdateien auf der SD-Karte beschädigt werden.
+Der Pi ist eine reine Anzeige — **alle Kalenderdaten liegen bei Microsoft**, nicht lokal. Bei einem Stromausfall können jedoch Systemdateien auf der SD-Karte beschädigt werden.
 
-**Empfehlungen:**
+### Lösung: Read-Only Dateisystem
+
+Das mitgelieferte Script `protect.sh` nutzt OverlayFS von Raspberry Pi OS, um das gesamte Dateisystem schreibgeschützt zu machen. Alle Schreibvorgänge landen in einem temporären RAM-Overlay und gehen beim Neustart verloren — die SD-Karte wird nie beschrieben.
+
+### Sichern (nach fertiger Konfiguration)
+
+```bash
+cd ~/kalender-display
+./protect.sh lock
+sudo reboot
+```
+
+Nach dem Reboot ist die SD-Karte geschützt. Der Kalender funktioniert normal weiter, da er nur Daten von Microsoft liest und nichts lokal speichert.
+
+### Entsperren (für Wartung)
+
+Wenn Updates, .env-Änderungen oder andere Wartung nötig ist:
+
+```bash
+cd ~/kalender-display
+./protect.sh unlock
+sudo reboot
+# ... Änderungen vornehmen ...
+./protect.sh lock
+sudo reboot
+```
+
+### Status prüfen
+
+```bash
+./protect.sh status
+```
+
+### Zusätzliche Empfehlungen
+
 - Hochwertige SD-Karte verwenden (High Endurance / Industrial)
 - Nach fertiger Einrichtung ein **Image der SD-Karte** ziehen (mit Win32DiskImager oder Raspberry Pi Imager), als Backup auf Windows-PC aufbewahren
 - Bei Problemen: Image einfach zurückflashen — kein Neuaufbau der Konfiguration nötig
-- Optional: USV (Unterbrechungsfreie Stromversorgung) für den Pi
 
 ---
 
@@ -499,6 +538,13 @@ sudo systemctl start kalender.service
 ```bash
 sudo journalctl -u kalender.service -f
 sudo journalctl -u kalender.service --since "1 hour ago"
+```
+
+### SD-Karten-Schutz
+```bash
+./protect.sh status    # Status anzeigen
+./protect.sh lock      # Schreibschutz aktivieren (+ reboot)
+./protect.sh unlock    # Schreibschutz deaktivieren (+ reboot)
 ```
 
 ### Browser im Kiosk steuern (mit Tastatur am Pi)

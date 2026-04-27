@@ -130,10 +130,13 @@ fi
 cp "$SCRIPT_DIR/config/labwc-autostart" "$LABWC_DIR/autostart"
 chmod +x "$LABWC_DIR/autostart"
 
-# rc.xml: Cursor-Verhalten
+# rc.xml
 cp "$SCRIPT_DIR/config/labwc-rc.xml" "$LABWC_DIR/rc.xml"
 
-ok "labwc Autostart und Cursor-Config installiert"
+# environment: Cursor minimal (1px Fallback)
+cp "$SCRIPT_DIR/config/labwc-environment" "$LABWC_DIR/environment"
+
+ok "labwc Autostart, Cursor und Environment installiert"
 
 # =============================================================================
 # 8. Chromium Kiosk-Policies

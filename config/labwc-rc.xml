@@ -1,8 +1,9 @@
 <?xml version="1.0" ?>
 <labwc_config>
-  <cursor>
-    <hideOnKeypress>yes</hideOnKeypress>
-    <hideInactive>yes</hideInactive>
-    <hideInactiveDelay>1</hideInactiveDelay>
-  </cursor>
+  <!--
+    labwc hat keine Cursor-Optionen in rc.xml.
+    Cursor-Hiding wird über zwei Wege sichergestellt:
+    1. CSS "cursor: none" in index.html (innerhalb Chromium)
+    2. XCURSOR_SIZE=1 in labwc environment (systemweit, als Fallback)
+  -->
 </labwc_config>
