@@ -13,8 +13,9 @@ Ein Raspberry Pi 4 zeigt im Vollbild-Modus den Wochenkalender des Ressourcenpost
 ### Funktionen
 
 - **Aktuelle Woche** — Standardansicht mit 7-Tage-Kalender
-- **Nächste Woche** — Vorschau auf die kommende Woche
 - **4-Wochen-Übersicht** — 4 Wochen als 2×2-Grid (je ein Viertel des Displays)
+- **2-Monats-Übersicht (aktuell + nächster Monat)** — Outlook-Stil, Kacheln pro Tag mit Termintiteln (ohne Zeit)
+- **2-Monats-Übersicht (übernächster + folgender Monat)** — gleicher Stil, Monate +2 und +3
 - **Pfeiltasten-Navigation** — Wechsel zwischen den Ansichten per Tastatur
 - **Kategorienfarben** — Termine farblich nach Outlook-Kategorie
 - **Live-Uhrzeit** und **"Jetzt"-Linie** im heutigen Tag
@@ -306,13 +307,14 @@ Deaktiviert Chromium-Features die im Kiosk-Modus stören (Übersetzung, Standard
 | Ansicht | Beschreibung |
 |---|---|
 | Aktuelle Woche | Standardansicht, Montag bis Sonntag der aktuellen Woche |
-| Nächste Woche | Vorschau auf die kommende Woche |
 | 4-Wochen-Übersicht | 4 Wochen als 2×2-Grid, je ein Viertel des Displays |
+| 2-Monats-Übersicht (Monat 1+2) | Outlook-Stil: aktueller + nächster Monat als Kacheln-Raster, Termintitel ohne Zeit |
+| 2-Monats-Übersicht (Monat 3+4) | Gleicher Stil, übernächster + folgender Monat |
 
 ### Navigation (Pfeiltasten)
 
-- **Pfeiltaste rechts:** Aktuelle Woche → Nächste Woche → 4-Wochen → Aktuelle Woche
-- **Pfeiltaste links:** Aktuelle Woche → 4-Wochen → Nächste Woche → Aktuelle Woche
+- **Pfeiltaste rechts:** Aktuelle Woche → 4-Wochen → Monat 1+2 → Monat 3+4 → Aktuelle Woche
+- **Pfeiltaste links:** umgekehrte Reihenfolge
 
 Die aktuelle Ansicht wird im Header angezeigt.
 
