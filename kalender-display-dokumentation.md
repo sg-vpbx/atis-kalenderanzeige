@@ -135,6 +135,7 @@ atis-kalenderanzeige/
 ├── install.sh                # Automatisches Installations-Script
 ├── .env.example              # Vorlage für Zugangsdaten
 ├── protect.sh                # SD-Karten-Schutz (lock/unlock)
+├── update.sh                 # Update-Script (Git pull + Service-Neustart)
 ├── config/
 │   ├── kalender.service      # systemd-Service
 │   ├── labwc-autostart       # Chromium Kiosk-Autostart
@@ -497,13 +498,15 @@ Nach dem Reboot ist die SD-Karte geschützt. Der Kalender funktioniert normal we
 Wenn Updates, .env-Änderungen oder andere Wartung nötig ist:
 
 ```bash
-cd ~/kalender-display
+cd ~/atis-kalenderanzeige
 ./protect.sh unlock
 sudo reboot
 # ... Änderungen vornehmen ...
 ./protect.sh lock
 sudo reboot
 ```
+
+**Tipp:** Für reine Code-Updates (neue Version aus Git) gibt es das Script `update.sh`, das den ganzen Ablauf automatisiert — siehe nächster Abschnitt.
 
 ### Status prüfen
 
@@ -516,6 +519,59 @@ sudo reboot
 - Hochwertige SD-Karte verwenden (High Endurance / Industrial)
 - Nach fertiger Einrichtung ein **Image der SD-Karte** ziehen (mit Win32DiskImager oder Raspberry Pi Imager), als Backup auf Windows-PC aufbewahren
 - Bei Problemen: Image einfach zurückflashen — kein Neuaufbau der Konfiguration nötig
+
+---
+
+## 11a. Updates einspielen (`update.sh`)
+
+Wenn am Code Änderungen gemacht und ins Git-Repo gepusht wurden, lassen sich diese mit `update.sh` auf den Pi bringen. Das Script kümmert sich automatisch um den OverlayFS-Schreibschutz.
+
+### Workflow
+
+**Am PC:** Änderungen committen und pushen.
+
+```bash
+git add .
+git commit -m "..."
+git push
+```
+
+**Am Pi (per SSH):**
+
+```bash
+cd ~/atis-kalenderanzeige
+./update.sh
+```
+
+### Was das Script macht
+
+1. **Status prüfen:** Ist der Schreibschutz aktiv?
+   - **Wenn ja:** Schreibschutz deaktivieren + Reboot. Nach dem Neustart `update.sh` einfach erneut ausführen.
+   - **Wenn nein:** weiter mit Schritt 2.
+2. **Git Pull** im Repo-Verzeichnis.
+3. **App-Dateien kopieren** (`app.py`, `index.html`, `requirements.txt`) nach `/home/admin/kalender-display/`.
+4. **Python-Abhängigkeiten** aktualisieren (falls `requirements.txt` geändert wurde).
+5. **Config-Dateien** aktualisieren (systemd-Service, labwc, Chromium-Policies).
+6. **kalender.service** neustarten und Backend testen.
+7. **Schreibschutz wieder aktivieren?** — interaktive Abfrage am Ende. Bei „ja" → lock + reboot.
+
+### Beispiel-Ablauf bei aktivem Schreibschutz
+
+```bash
+$ ./update.sh
+[WARN]  SD-Karten-Schutz ist AKTIV — Update nicht möglich.
+Fortfahren? [j/N] j
+[INFO]  Deaktiviere Schreibschutz...
+[INFO]  Pi startet in 5 Sekunden neu...
+# → Pi rebootet, neu einloggen, nochmal ausführen:
+
+$ ./update.sh
+[OK]    Schreibschutz ist inaktiv — Update kann durchgeführt werden.
+[INFO]  Hole Änderungen aus Git...
+...
+Schreibschutz wieder aktivieren? [j/N] j
+Pi jetzt neu starten? [j/N] j
+```
 
 ---
 
@@ -545,6 +601,12 @@ sudo journalctl -u kalender.service --since "1 hour ago"
 ./protect.sh status    # Status anzeigen
 ./protect.sh lock      # Schreibschutz aktivieren (+ reboot)
 ./protect.sh unlock    # Schreibschutz deaktivieren (+ reboot)
+```
+
+### Updates einspielen
+```bash
+cd ~/atis-kalenderanzeige
+./update.sh            # Git pull + Service-Neustart (Schreibschutz wird automatisch berücksichtigt)
 ```
 
 ### Browser im Kiosk steuern (mit Tastatur am Pi)

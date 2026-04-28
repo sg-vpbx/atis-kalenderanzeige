@@ -105,7 +105,7 @@
   .mini-week .mini-allday-row { display: flex; gap: 1px; padding: 1px; flex-wrap: wrap; }
   .mini-week .mini-allday-row:empty { display: none; }
   .mini-week .mini-allday { padding: 1px 3px; border-radius: 2px; font-size: 9px;
-                            font-weight: 700; color: #1e1e2e; }
+                            font-weight: 700; color: #1e1e2e; background: #f9e2af; }
 
   .mini-week .mini-event { position: absolute; border-radius: 3px; padding: 1px 3px;
                            font-size: 10px; overflow: hidden;
@@ -167,6 +167,15 @@ function colorFor(event){
     if (CATEGORY_COLORS[c]) return CATEGORY_COLORS[c];
   }
   return "#89b4fa";
+}
+
+// Liefert nur dann eine Farbe, wenn eine bekannte Kategorie gesetzt ist —
+// sonst null (CSS-Default greift). Verhindert "alles wird blau".
+function categoryColorOrNull(event){
+  for (const c of (event.categories || [])){
+    if (CATEGORY_COLORS[c]) return CATEGORY_COLORS[c];
+  }
+  return null;
 }
 
 function pad(n){ return String(n).padStart(2,"0"); }
@@ -279,17 +288,23 @@ function renderWeek(events, weekOffset){
     const dayStart = new Date(date); dayStart.setHours(0,0,0,0);
     const dayEnd   = new Date(date); dayEnd.setHours(23,59,59,999);
 
-    const dayEvents = events
-      .map(e => ({...e, _start: parseNaiveLocal(e.start), _end: parseNaiveLocal(e.end)}))
-      .filter(e => e._start >= dayStart && e._start <= dayEnd);
+    const enriched = events
+      .map(e => ({...e, _start: parseNaiveLocal(e.start), _end: parseNaiveLocal(e.end)}));
 
-    const allday = dayEvents.filter(e => e.isAllDay);
-    const timed  = dayEvents.filter(e => !e.isAllDay);
+    // Ganztagstermine: Überlappung mit dem Tag prüfen (mehrtägige Events!)
+    const allday = enriched.filter(e => e.isAllDay
+      && e._start < dayEnd && e._end > dayStart);
+
+    // Zeitgebundene Termine: nur am Starttag anzeigen
+    const timed = enriched.filter(e => !e.isAllDay
+      && e._start >= dayStart && e._start <= dayEnd);
 
     allday.forEach(e => {
       const a = document.createElement("div");
-      a.className = "allday"; a.textContent = e.subject;
-      a.style.background = colorFor(e);
+      a.className = "allday";
+      a.textContent = e.subject;
+      const cat = categoryColorOrNull(e);
+      if (cat) a.style.background = cat;
       alldayRow.appendChild(a);
     });
 
@@ -312,10 +327,24 @@ function renderWeek(events, weekOffset){
       ev.style.left   = `calc(${leftPct}% + 2px)`;
       ev.style.width  = `calc(${widthPct}% - 4px)`;
       ev.style.background = colorFor(e);
-      ev.innerHTML = `
-        <div class="subject">${e.subject}</div>
-        <div class="time">${pad(s.getHours())}:${pad(s.getMinutes())}–${pad(en.getHours())}:${pad(en.getMinutes())}</div>
-        ${e.location ? `<div class="loc">📍 ${e.location}</div>` : ""}`;
+
+      const subject = document.createElement("div");
+      subject.className = "subject";
+      subject.textContent = e.subject;
+      ev.appendChild(subject);
+
+      const time = document.createElement("div");
+      time.className = "time";
+      time.textContent = `${pad(s.getHours())}:${pad(s.getMinutes())}–${pad(en.getHours())}:${pad(en.getMinutes())}`;
+      ev.appendChild(time);
+
+      if (e.location){
+        const loc = document.createElement("div");
+        loc.className = "loc";
+        loc.textContent = `📍 ${e.location}`;
+        ev.appendChild(loc);
+      }
+
       inner.appendChild(ev);
     });
 
@@ -409,17 +438,21 @@ function renderFourWeeks(events){
       const dayStart = new Date(date); dayStart.setHours(0,0,0,0);
       const dayEnd   = new Date(date); dayEnd.setHours(23,59,59,999);
 
-      const dayEvents = events
-        .map(e => ({...e, _start: parseNaiveLocal(e.start), _end: parseNaiveLocal(e.end)}))
-        .filter(e => e._start >= dayStart && e._start <= dayEnd);
+      const enriched = events
+        .map(e => ({...e, _start: parseNaiveLocal(e.start), _end: parseNaiveLocal(e.end)}));
 
-      const allday = dayEvents.filter(e => e.isAllDay);
-      const timed  = dayEvents.filter(e => !e.isAllDay);
+      const allday = enriched.filter(e => e.isAllDay
+        && e._start < dayEnd && e._end > dayStart);
+
+      const timed = enriched.filter(e => !e.isAllDay
+        && e._start >= dayStart && e._start <= dayEnd);
 
       allday.forEach(e => {
         const a = document.createElement("div");
-        a.className = "mini-allday"; a.textContent = e.subject;
-        a.style.background = colorFor(e);
+        a.className = "mini-allday";
+        a.textContent = e.subject;
+        const cat = categoryColorOrNull(e);
+        if (cat) a.style.background = cat;
         alldayRow.appendChild(a);
       });
 
@@ -442,7 +475,12 @@ function renderFourWeeks(events){
         ev.style.left   = `calc(${leftPct}% + 1px)`;
         ev.style.width  = `calc(${widthPct}% - 2px)`;
         ev.style.background = colorFor(e);
-        ev.innerHTML = `<div class="subject">${e.subject}</div>`;
+
+        const subject = document.createElement("div");
+        subject.className = "subject";
+        subject.textContent = e.subject;
+        ev.appendChild(subject);
+
         inner.appendChild(ev);
       });
 
@@ -512,8 +550,10 @@ document.addEventListener("keydown", function(e){
 });
 
 load();
+// Alle 2 Minuten neue Daten laden — View bleibt erhalten.
 setInterval(load, 2 * 60 * 1000);
-setInterval(() => location.reload(), 60 * 60 * 1000);
+// Einmal pro Tag harter Reload (frische JS/CSS, Speicher-Reset).
+setInterval(() => location.reload(), 24 * 60 * 60 * 1000);
 </script>
 </body>
 </html>

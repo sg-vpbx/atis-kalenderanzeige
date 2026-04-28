@@ -33,12 +33,15 @@ def get_token():
 def get_week_range(offset=0, weeks=1):
     tz = pytz.timezone(TIMEZONE)
     now = datetime.now(tz)
-    monday = now - timedelta(days=now.weekday())
-    monday = monday.replace(hour=0, minute=0, second=0, microsecond=0)
-    monday = monday + timedelta(weeks=offset)
-    end_day = monday + timedelta(weeks=weeks)
-    monday_utc = monday.astimezone(pytz.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-    end_utc = end_day.astimezone(pytz.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    # Datum (ohne Zeit) bestimmen, dann sauber re-localisieren —
+    # so wird die Sommer-/Winterzeit korrekt behandelt.
+    monday_date = (now - timedelta(days=now.weekday())).date()
+    monday_date = monday_date + timedelta(weeks=offset)
+    end_date = monday_date + timedelta(weeks=weeks)
+    monday_local = tz.localize(datetime(monday_date.year, monday_date.month, monday_date.day))
+    end_local = tz.localize(datetime(end_date.year, end_date.month, end_date.day))
+    monday_utc = monday_local.astimezone(pytz.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+    end_utc = end_local.astimezone(pytz.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     return monday_utc, end_utc
 
 @app.route("/api/events")
@@ -81,7 +84,12 @@ def api_events():
 
 @app.route("/")
 def index():
-    return send_file("index.html")
+    response = send_file("index.html")
+    # Verhindern, dass Chromium nach einem Update die alte Version cached.
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
