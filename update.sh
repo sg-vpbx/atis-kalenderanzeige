@@ -106,54 +106,49 @@ if [ -z "$REMOTE" ]; then
 fi
 
 if [ "$LOCAL" = "$REMOTE" ]; then
-    ok "Bereits auf dem neuesten Stand — keine Änderungen."
-    SKIP_RESTART=1
+    ok "Repo ist bereits auf dem neuesten Stand."
 else
     git pull
     ok "Git-Pull erfolgreich"
-    SKIP_RESTART=0
 fi
 
-# --- Dateien kopieren ---
-if [ "$SKIP_RESTART" = "0" ]; then
-    info "Kopiere App-Dateien nach $APP_DIR..."
-    cp "$SCRIPT_DIR/app.py" "$APP_DIR/"
-    cp "$SCRIPT_DIR/index.html" "$APP_DIR/"
-    cp "$SCRIPT_DIR/requirements.txt" "$APP_DIR/"
-    ok "App-Dateien aktualisiert"
+# --- Dateien immer kopieren ---
+# Auch wenn Git aktuell ist: das App-Verzeichnis kann veraltet sein
+# (z.B. wenn vorher manuell gepullt wurde). Kopieren ist günstig und idempotent.
+info "Kopiere App-Dateien nach $APP_DIR..."
+cp "$SCRIPT_DIR/app.py" "$APP_DIR/"
+cp "$SCRIPT_DIR/index.html" "$APP_DIR/"
+cp "$SCRIPT_DIR/requirements.txt" "$APP_DIR/"
+ok "App-Dateien aktualisiert"
 
-    # --- Python-Dependencies (falls geändert) ---
-    info "Prüfe Python-Abhängigkeiten..."
-    "$APP_DIR/venv/bin/pip" install --quiet -r "$APP_DIR/requirements.txt"
-    ok "Python-Abhängigkeiten aktuell"
+info "Prüfe Python-Abhängigkeiten..."
+"$APP_DIR/venv/bin/pip" install --quiet -r "$APP_DIR/requirements.txt"
+ok "Python-Abhängigkeiten aktuell"
 
-    # --- Config-Dateien ---
-    info "Aktualisiere Konfigurationsdateien..."
-    sudo cp "$SCRIPT_DIR/config/kalender.service" /etc/systemd/system/kalender.service
-    sudo mkdir -p /etc/chromium/policies/managed
-    sudo cp "$SCRIPT_DIR/config/kiosk-policy.json" /etc/chromium/policies/managed/kiosk-policy.json
+info "Aktualisiere Konfigurationsdateien..."
+sudo cp "$SCRIPT_DIR/config/kalender.service" /etc/systemd/system/kalender.service
+sudo mkdir -p /etc/chromium/policies/managed
+sudo cp "$SCRIPT_DIR/config/kiosk-policy.json" /etc/chromium/policies/managed/kiosk-policy.json
 
-    LABWC_DIR="/home/$USER/.config/labwc"
-    mkdir -p "$LABWC_DIR"
-    cp "$SCRIPT_DIR/config/labwc-autostart" "$LABWC_DIR/autostart"
-    chmod +x "$LABWC_DIR/autostart"
-    cp "$SCRIPT_DIR/config/labwc-rc.xml" "$LABWC_DIR/rc.xml"
-    cp "$SCRIPT_DIR/config/labwc-environment" "$LABWC_DIR/environment"
-    ok "Konfigurationsdateien aktualisiert"
+LABWC_DIR="/home/$USER/.config/labwc"
+mkdir -p "$LABWC_DIR"
+cp "$SCRIPT_DIR/config/labwc-autostart" "$LABWC_DIR/autostart"
+chmod +x "$LABWC_DIR/autostart"
+cp "$SCRIPT_DIR/config/labwc-rc.xml" "$LABWC_DIR/rc.xml"
+cp "$SCRIPT_DIR/config/labwc-environment" "$LABWC_DIR/environment"
+ok "Konfigurationsdateien aktualisiert"
 
-    # --- Service neustarten ---
-    info "Starte kalender.service neu..."
-    sudo systemctl daemon-reload
-    sudo systemctl restart kalender.service
-    sleep 3
+info "Starte kalender.service neu..."
+sudo systemctl daemon-reload
+sudo systemctl restart kalender.service
+sleep 3
 
-    if curl -s --max-time 5 http://localhost:5000/api/events > /dev/null 2>&1; then
-        ok "Backend antwortet auf http://localhost:5000"
-    else
-        warn "Backend antwortet noch nicht — prüfe mit:"
-        warn "  sudo systemctl status kalender.service"
-        warn "  journalctl -u kalender.service -n 50"
-    fi
+if curl -s --max-time 5 http://localhost:5000/api/events > /dev/null 2>&1; then
+    ok "Backend antwortet auf http://localhost:5000"
+else
+    warn "Backend antwortet noch nicht — prüfe mit:"
+    warn "  sudo systemctl status kalender.service"
+    warn "  journalctl -u kalender.service -n 50"
 fi
 
 # =============================================================================
