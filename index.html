@@ -7,57 +7,85 @@
   * { box-sizing: border-box; margin: 0; padding: 0; cursor: none !important; }
   html, body { height: 100%; font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
                background: #f5f5f5; color: #1e1e2e; overflow: hidden; }
+  body { display: flex; flex-direction: column; }
 
-  header { display: flex; justify-content: space-between; align-items: center;
-           padding: 14px 28px; background: #ffffff; border-bottom: 2px solid #d0d0d0; }
-  header h1 { font-size: 32px; font-weight: 700; color: #1e1e2e; }
-  header .right { text-align: right; }
-  header .clock { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; color: #1e1e2e; }
-  header .status { font-size: 14px; color: #666; }
-  header .view-label { font-size: 16px; color: #444; margin-top: 2px; }
+  /* --- Header: 3-Spalten-Grid (links / mittig / rechts) --- */
+  header { flex-shrink: 0; display: grid; grid-template-columns: 1fr auto 1fr;
+           align-items: center; padding: 16px 32px;
+           background: #ffffff; border-bottom: 2px solid #d0d0d0; }
+  header h1 { font-size: 40px; font-weight: 700; color: #1e1e2e; justify-self: start; }
+  header .center { justify-self: center; text-align: center; }
+  header .right { justify-self: end; text-align: right; }
+  header .clock { font-size: 36px; font-weight: 600; font-variant-numeric: tabular-nums; color: #1e1e2e; }
+  header .status { font-size: 15px; color: #666; }
+  header .view-label { font-size: 28px; font-weight: 700; color: #1e1e2e; }
+
+  /* --- Tageszeit-Zonen (Hintergrund-Schraffur):
+         06–08 (morgens), 12–13 (Mittag), 17–20 (abends) --- */
+  .zones-bg {
+    background-image:
+      linear-gradient(to bottom,
+        rgba(0,0,0,0.07) 0,
+        rgba(0,0,0,0.07) calc(2 / 14 * 100%),
+        transparent       calc(2 / 14 * 100%),
+        transparent       calc(6 / 14 * 100%),
+        rgba(0,0,0,0.07) calc(6 / 14 * 100%),
+        rgba(0,0,0,0.07) calc(7 / 14 * 100%),
+        transparent       calc(7 / 14 * 100%),
+        transparent       calc(11 / 14 * 100%),
+        rgba(0,0,0,0.07) calc(11 / 14 * 100%),
+        rgba(0,0,0,0.07) 100%
+      ),
+      repeating-linear-gradient(to bottom, transparent 0,
+        transparent calc(100% / 14 - 1px), #d0d0d0 calc(100% / 14 - 1px),
+        #d0d0d0 calc(100% / 14));
+  }
 
   /* --- Single week view --- */
-  .grid { display: grid; grid-template-columns: 70px repeat(7, 1fr);
-          grid-template-rows: auto 1fr; height: calc(100vh - 72px); }
+  .grid { flex: 1; min-height: 0; display: grid;
+          grid-template-columns: 80px repeat(7, 1fr);
+          grid-template-rows: auto auto 1fr; }
 
   .day-header { padding: 10px 6px; text-align: center; background: #ffffff;
                 border-bottom: 2px solid #d0d0d0; border-left: 1px solid #d0d0d0;
                 grid-row: 1; }
-  .day-header .name { font-weight: 700; font-size: 20px; color: #333; }
-  .day-header .date { font-size: 17px; color: #555; }
+  .day-header .name { font-weight: 700; font-size: 26px; color: #333; }
+  .day-header .date { font-size: 22px; color: #555; }
   .day-header.today .name { color: #2563eb; }
   .day-header.today .date { color: #2563eb; font-weight: 700; }
 
-  .hours { grid-column: 1; grid-row: 2; display: grid;
+  /* All-Day-Zeile: gemeinsame Höhe für alle Tage (Alignment des Stundenrasters) */
+  .allday-cell { grid-row: 2; border-left: 1px solid #d0d0d0;
+                 background: #fafafa;
+                 border-bottom: var(--allday-border, none);
+                 height: var(--allday-height, 0); overflow: hidden; }
+  .allday-row { display: flex; flex-direction: column; gap: 3px;
+                padding: 3px; height: 100%; }
+  .allday { background: #f9e2af; color: #1e1e2e; padding: 3px 8px;
+            border-radius: 4px; font-size: 18px; font-weight: 700;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .allday-corner { grid-row: 2; grid-column: 1; background: #fafafa;
+                   border-bottom: var(--allday-border, none); }
+
+  .hours { grid-column: 1; grid-row: 3; display: grid;
            grid-template-rows: repeat(14, 1fr); }
-  .hour { font-size: 15px; color: #555; text-align: right; padding-right: 8px;
+  .hour { font-size: 18px; color: #555; text-align: right; padding-right: 10px;
           border-top: 1px solid #d0d0d0; }
 
   .day-col { display: flex; flex-direction: column;
-             border-left: 1px solid #d0d0d0; grid-row: 2; }
-  .day-col-inner { position: relative; flex: 1;
-                   background: repeating-linear-gradient(to bottom, transparent 0,
-                         transparent calc(100% / 14 - 1px), #d0d0d0 calc(100% / 14 - 1px),
-                         #d0d0d0 calc(100% / 14)); }
-  .day-col.today .day-col-inner { background-color: #eef4ff;
-                   background-image: repeating-linear-gradient(to bottom, transparent 0,
-                         transparent calc(100% / 14 - 1px), #d0d0d0 calc(100% / 14 - 1px),
-                         #d0d0d0 calc(100% / 14)); }
+             border-left: 1px solid #d0d0d0; grid-row: 3; }
+  .day-col-inner { position: relative; flex: 1; }
+  .day-col.today .day-col-inner { background-color: #eef4ff; }
 
-  .event { position: absolute; border-radius: 5px; padding: 4px 6px; font-size: 15px;
+  .event { position: absolute; border-radius: 6px; padding: 5px 8px; font-size: 19px;
            overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
            background: #89b4fa; color: #1e1e2e;
-           border-left: 3px solid rgba(0,0,0,0.2); }
+           border-left: 4px solid rgba(0,0,0,0.2); }
   .event .subject { font-weight: 700; white-space: nowrap; overflow: hidden;
                     text-overflow: ellipsis; }
-  .event .time { font-size: 13px; opacity: 0.8; }
-  .event .loc  { font-size: 13px; opacity: 0.7; white-space: nowrap;
+  .event .time { font-size: 16px; opacity: 0.85; }
+  .event .loc  { font-size: 16px; opacity: 0.75; white-space: nowrap;
                  overflow: hidden; text-overflow: ellipsis; }
-
-  .allday-row { display: flex; gap: 2px; padding: 2px; flex-wrap: wrap; }
-  .allday-row:empty { display: none; }
-  .allday { background: #f9e2af; color: #1e1e2e; padding: 2px 6px;
-            border-radius: 3px; font-size: 14px; font-weight: 700; }
 
   .now-line { position: absolute; left: 0; right: 0; height: 2px;
               background: #dc2626; z-index: 10; }
@@ -65,50 +93,74 @@
                       width: 10px; height: 10px; background: #dc2626; border-radius: 50%; }
 
   /* --- 4-week view (2x2 grid) --- */
-  .four-week-container { display: grid; grid-template-columns: 1fr 1fr;
-                         grid-template-rows: 1fr 1fr; height: calc(100vh - 72px);
+  .four-week-container { flex: 1; min-height: 0; display: grid;
+                         grid-template-columns: 1fr 1fr;
+                         grid-template-rows: 1fr 1fr;
                          gap: 4px; padding: 4px; background: #e0e0e0; }
 
   .mini-week { background: #fff; overflow: hidden; display: grid;
-               grid-template-columns: 40px repeat(7, 1fr);
-               grid-template-rows: auto auto 1fr; border-radius: 4px; }
+               grid-template-columns: 50px repeat(7, 1fr);
+               grid-template-rows: auto auto auto 1fr; border-radius: 4px; }
 
-  .mini-week .week-title { grid-column: 1 / -1; grid-row: 1; padding: 4px 8px;
-                           font-size: 15px; font-weight: 700; background: #f0f0f0;
+  .mini-week .week-title { grid-column: 1 / -1; grid-row: 1; padding: 5px 10px;
+                           font-size: 18px; font-weight: 700; background: #f0f0f0;
                            border-bottom: 1px solid #d0d0d0; color: #333; }
   .mini-week .week-title.current { background: #dbeafe; color: #1e40af; }
 
-  .mini-week .mini-day-header { padding: 2px 2px; text-align: center; background: #fafafa;
+  .mini-week .mini-day-header { padding: 3px 2px; text-align: center; background: #fafafa;
                                 border-bottom: 1px solid #d0d0d0; border-left: 1px solid #e0e0e0;
                                 grid-row: 2; }
-  .mini-week .mini-day-header .name { font-weight: 700; font-size: 12px; color: #333; }
-  .mini-week .mini-day-header .date { font-size: 11px; color: #666; }
+  .mini-week .mini-day-header .name { font-weight: 700; font-size: 15px; color: #333; }
+  .mini-week .mini-day-header .date { font-size: 13px; color: #666; }
   .mini-week .mini-day-header.today .name,
   .mini-week .mini-day-header.today .date { color: #2563eb; }
 
   .mini-week .mini-corner { grid-column: 1; grid-row: 2; background: #fafafa;
                             border-bottom: 1px solid #d0d0d0; }
 
-  .mini-week .mini-hours { grid-column: 1; grid-row: 3; display: grid;
+  /* Mini All-Day-Zeile mit gleicher Höhe für alle Tage */
+  .mini-week .mini-allday-cell { grid-row: 3; border-left: 1px solid #e0e0e0;
+                                  background: #fafafa;
+                                  border-bottom: var(--mini-allday-border, none);
+                                  height: var(--mini-allday-height, 0); overflow: hidden; }
+  .mini-week .mini-allday-row { display: flex; flex-direction: column; gap: 1px;
+                                padding: 1px; height: 100%; }
+  .mini-week .mini-allday { padding: 2px 4px; border-radius: 3px; font-size: 13px;
+                            font-weight: 700; color: #1e1e2e; background: #f9e2af;
+                            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mini-week .mini-allday-corner { grid-column: 1; grid-row: 3; background: #fafafa;
+                                   border-bottom: var(--mini-allday-border, none); }
+
+  .mini-week .mini-hours { grid-column: 1; grid-row: 4; display: grid;
                            grid-template-rows: repeat(14, 1fr); }
-  .mini-week .mini-hours .hour { font-size: 10px; color: #888; text-align: right;
-                                  padding-right: 4px; border-top: 1px solid #e0e0e0; }
+  .mini-week .mini-hours .hour { font-size: 13px; color: #888; text-align: right;
+                                  padding-right: 5px; border-top: 1px solid #e0e0e0; }
 
   .mini-week .mini-day-col { display: flex; flex-direction: column;
-                             border-left: 1px solid #e0e0e0; grid-row: 3; }
+                             border-left: 1px solid #e0e0e0; grid-row: 4; }
+  /* Mini-Zonen mit etwas helleren Linien */
   .mini-week .mini-day-col-inner { position: relative; flex: 1;
-                                   background: repeating-linear-gradient(to bottom, transparent 0,
-                                         transparent calc(100% / 14 - 1px), #e8e8e8 calc(100% / 14 - 1px),
-                                         #e8e8e8 calc(100% / 14)); }
+    background-image:
+      linear-gradient(to bottom,
+        rgba(0,0,0,0.05) 0,
+        rgba(0,0,0,0.05) calc(2 / 14 * 100%),
+        transparent      calc(2 / 14 * 100%),
+        transparent      calc(6 / 14 * 100%),
+        rgba(0,0,0,0.05) calc(6 / 14 * 100%),
+        rgba(0,0,0,0.05) calc(7 / 14 * 100%),
+        transparent      calc(7 / 14 * 100%),
+        transparent      calc(11 / 14 * 100%),
+        rgba(0,0,0,0.05) calc(11 / 14 * 100%),
+        rgba(0,0,0,0.05) 100%
+      ),
+      repeating-linear-gradient(to bottom, transparent 0,
+        transparent calc(100% / 14 - 1px), #e8e8e8 calc(100% / 14 - 1px),
+        #e8e8e8 calc(100% / 14));
+  }
   .mini-week .mini-day-col.today .mini-day-col-inner { background-color: #f0f6ff; }
 
-  .mini-week .mini-allday-row { display: flex; gap: 1px; padding: 1px; flex-wrap: wrap; }
-  .mini-week .mini-allday-row:empty { display: none; }
-  .mini-week .mini-allday { padding: 1px 3px; border-radius: 2px; font-size: 9px;
-                            font-weight: 700; color: #1e1e2e; background: #f9e2af; }
-
-  .mini-week .mini-event { position: absolute; border-radius: 3px; padding: 1px 3px;
-                           font-size: 10px; overflow: hidden;
+  .mini-week .mini-event { position: absolute; border-radius: 3px; padding: 2px 4px;
+                           font-size: 13px; overflow: hidden;
                            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
                            color: #1e1e2e; border-left: 2px solid rgba(0,0,0,0.2); }
   .mini-week .mini-event .subject { font-weight: 700; white-space: nowrap;
@@ -120,8 +172,8 @@
 </head>
 <body>
   <header>
-    <h1>&#x1FA9A; Schreinerei – Wochenkalender</h1>
-    <div>
+    <h1>Schreinerei – Wochenkalender</h1>
+    <div class="center">
       <div class="view-label" id="viewLabel">Aktuelle Woche</div>
     </div>
     <div class="right">
@@ -243,23 +295,75 @@ function renderWeek(events, weekOffset){
   monday.setDate(monday.getDate() + weekOffset * 7);
   const today = new Date(); today.setHours(0,0,0,0);
 
+  // Pro Tag Termine vorbereiten + Maximalanzahl Ganztagstermine bestimmen.
+  // So bekommen alle All-Day-Zellen die gleiche Höhe → Stundenraster bleibt aligned.
+  const dayData = [];
+  let maxAllDay = 0;
+  for (let d = 0; d < 7; d++){
+    const date = new Date(monday); date.setDate(monday.getDate()+d);
+    const isToday = date.getTime() === today.getTime();
+    const dStart = new Date(date); dStart.setHours(0,0,0,0);
+    const dEnd   = new Date(date); dEnd.setHours(23,59,59,999);
+    const enriched = events.map(e =>
+      ({...e, _start: parseNaiveLocal(e.start), _end: parseNaiveLocal(e.end)}));
+    const allday = enriched.filter(e => e.isAllDay
+      && e._start < dEnd && e._end > dStart);
+    const timed = enriched.filter(e => !e.isAllDay
+      && e._start >= dStart && e._start <= dEnd);
+    if (allday.length > maxAllDay) maxAllDay = allday.length;
+    dayData.push({date, isToday, allday, timed});
+  }
+  const alldayPx = maxAllDay > 0 ? maxAllDay * 32 + 6 : 0;
+  grid.style.setProperty("--allday-height", alldayPx + "px");
+  grid.style.setProperty("--allday-border", maxAllDay > 0 ? "1px solid #d0d0d0" : "none");
+
+  // --- Row 1: Corner + 7 Tagesheader ---
   const corner = document.createElement("div");
   corner.style.gridColumn = "1"; corner.style.gridRow = "1";
   corner.style.background = "#ffffff";
   corner.style.borderBottom = "2px solid #d0d0d0";
   grid.appendChild(corner);
 
-  for (let d = 0; d < 7; d++){
-    const date = new Date(monday); date.setDate(monday.getDate()+d);
-    const isToday = date.getTime() === today.getTime();
+  dayData.forEach((dd, d) => {
     const head = document.createElement("div");
-    head.className = "day-header" + (isToday ? " today" : "");
+    head.className = "day-header" + (dd.isToday ? " today" : "");
     head.style.gridColumn = (d+2); head.style.gridRow = 1;
-    head.innerHTML = `<div class="name">${DAYS_DE[d]}</div>
-                      <div class="date">${pad(date.getDate())}.${pad(date.getMonth()+1)}</div>`;
+    const name = document.createElement("div");
+    name.className = "name"; name.textContent = DAYS_DE[d];
+    const dateLabel = document.createElement("div");
+    dateLabel.className = "date";
+    dateLabel.textContent = `${pad(dd.date.getDate())}.${pad(dd.date.getMonth()+1)}`;
+    head.appendChild(name); head.appendChild(dateLabel);
     grid.appendChild(head);
-  }
+  });
 
+  // --- Row 2: All-Day-Streifen (corner + 7 Zellen) ---
+  const alldayCorner = document.createElement("div");
+  alldayCorner.className = "allday-corner";
+  grid.appendChild(alldayCorner);
+
+  dayData.forEach((dd, d) => {
+    const cell = document.createElement("div");
+    cell.className = "allday-cell";
+    cell.style.gridColumn = (d+2);
+
+    const row = document.createElement("div");
+    row.className = "allday-row";
+    cell.appendChild(row);
+
+    dd.allday.forEach(e => {
+      const a = document.createElement("div");
+      a.className = "allday";
+      a.textContent = e.subject;
+      const cat = categoryColorOrNull(e);
+      if (cat) a.style.background = cat;
+      row.appendChild(a);
+    });
+
+    grid.appendChild(cell);
+  });
+
+  // --- Row 3: Stundenleiste + 7 Tagesspalten ---
   const hoursCol = document.createElement("div");
   hoursCol.className = "hours";
   for (let h = START_HOUR; h < END_HOUR; h++){
@@ -269,46 +373,16 @@ function renderWeek(events, weekOffset){
   }
   grid.appendChild(hoursCol);
 
-  for (let d = 0; d < 7; d++){
-    const date = new Date(monday); date.setDate(monday.getDate()+d);
-    const isToday = date.getTime() === today.getTime();
-
+  dayData.forEach((dd, d) => {
     const col = document.createElement("div");
-    col.className = "day-col" + (isToday ? " today" : "");
+    col.className = "day-col" + (dd.isToday ? " today" : "");
     col.style.gridColumn = (d+2);
 
-    const alldayRow = document.createElement("div");
-    alldayRow.className = "allday-row";
-    col.appendChild(alldayRow);
-
     const inner = document.createElement("div");
-    inner.className = "day-col-inner";
+    inner.className = "day-col-inner zones-bg";
     col.appendChild(inner);
 
-    const dayStart = new Date(date); dayStart.setHours(0,0,0,0);
-    const dayEnd   = new Date(date); dayEnd.setHours(23,59,59,999);
-
-    const enriched = events
-      .map(e => ({...e, _start: parseNaiveLocal(e.start), _end: parseNaiveLocal(e.end)}));
-
-    // Ganztagstermine: Überlappung mit dem Tag prüfen (mehrtägige Events!)
-    const allday = enriched.filter(e => e.isAllDay
-      && e._start < dayEnd && e._end > dayStart);
-
-    // Zeitgebundene Termine: nur am Starttag anzeigen
-    const timed = enriched.filter(e => !e.isAllDay
-      && e._start >= dayStart && e._start <= dayEnd);
-
-    allday.forEach(e => {
-      const a = document.createElement("div");
-      a.className = "allday";
-      a.textContent = e.subject;
-      const cat = categoryColorOrNull(e);
-      if (cat) a.style.background = cat;
-      alldayRow.appendChild(a);
-    });
-
-    const laid = layoutColumns(timed);
+    const laid = layoutColumns(dd.timed);
 
     laid.forEach(e => {
       const s = e._start, en = e._end;
@@ -348,7 +422,7 @@ function renderWeek(events, weekOffset){
       inner.appendChild(ev);
     });
 
-    if (isToday){
+    if (dd.isToday){
       const now = new Date();
       const frac = (now.getHours() + now.getMinutes()/60) - START_HOUR;
       if (frac >= 0 && frac <= HOURS){
@@ -360,7 +434,7 @@ function renderWeek(events, weekOffset){
     }
 
     grid.appendChild(col);
-  }
+  });
 }
 
 // --- 4-week rendering (2x2 grid) ---
@@ -382,7 +456,28 @@ function renderFourWeeks(events){
     const miniWeek = document.createElement("div");
     miniWeek.className = "mini-week";
 
-    // Week title
+    // Pro Tag Termine vorbereiten + Maximalanzahl Ganztagstermine
+    const dayData = [];
+    let maxAllDay = 0;
+    for (let d = 0; d < 7; d++){
+      const date = new Date(monday); date.setDate(monday.getDate()+d);
+      const isToday = date.getTime() === today.getTime();
+      const dStart = new Date(date); dStart.setHours(0,0,0,0);
+      const dEnd   = new Date(date); dEnd.setHours(23,59,59,999);
+      const enriched = events.map(e =>
+        ({...e, _start: parseNaiveLocal(e.start), _end: parseNaiveLocal(e.end)}));
+      const allday = enriched.filter(e => e.isAllDay
+        && e._start < dEnd && e._end > dStart);
+      const timed = enriched.filter(e => !e.isAllDay
+        && e._start >= dStart && e._start <= dEnd);
+      if (allday.length > maxAllDay) maxAllDay = allday.length;
+      dayData.push({date, isToday, allday, timed});
+    }
+    const alldayPx = maxAllDay > 0 ? maxAllDay * 22 + 4 : 0;
+    miniWeek.style.setProperty("--mini-allday-height", alldayPx + "px");
+    miniWeek.style.setProperty("--mini-allday-border", maxAllDay > 0 ? "1px solid #e0e0e0" : "none");
+
+    // Wochentitel (Row 1)
     const isCurrentWeek = w === 0;
     const weekEnd = new Date(monday); weekEnd.setDate(monday.getDate() + 6);
     const title = document.createElement("div");
@@ -390,25 +485,52 @@ function renderFourWeeks(events){
     title.textContent = `KW ${getISOWeek(monday)} — ${pad(monday.getDate())}.${pad(monday.getMonth()+1)} – ${pad(weekEnd.getDate())}.${pad(weekEnd.getMonth()+1)}`;
     miniWeek.appendChild(title);
 
-    // Corner
+    // Row 2: Corner + Tagesheader
     const corner = document.createElement("div");
     corner.className = "mini-corner";
     corner.style.gridColumn = "1";
     miniWeek.appendChild(corner);
 
-    // Day headers
-    for (let d = 0; d < 7; d++){
-      const date = new Date(monday); date.setDate(monday.getDate()+d);
-      const isToday = date.getTime() === today.getTime();
+    dayData.forEach((dd, d) => {
       const head = document.createElement("div");
-      head.className = "mini-day-header" + (isToday ? " today" : "");
+      head.className = "mini-day-header" + (dd.isToday ? " today" : "");
       head.style.gridColumn = (d+2);
-      head.innerHTML = `<div class="name">${DAYS_DE[d]}</div>
-                        <div class="date">${pad(date.getDate())}.${pad(date.getMonth()+1)}</div>`;
+      const name = document.createElement("div");
+      name.className = "name"; name.textContent = DAYS_DE[d];
+      const dateLabel = document.createElement("div");
+      dateLabel.className = "date";
+      dateLabel.textContent = `${pad(dd.date.getDate())}.${pad(dd.date.getMonth()+1)}`;
+      head.appendChild(name); head.appendChild(dateLabel);
       miniWeek.appendChild(head);
-    }
+    });
 
-    // Hours column
+    // Row 3: All-Day-Streifen
+    const alldayCorner = document.createElement("div");
+    alldayCorner.className = "mini-allday-corner";
+    miniWeek.appendChild(alldayCorner);
+
+    dayData.forEach((dd, d) => {
+      const cell = document.createElement("div");
+      cell.className = "mini-allday-cell";
+      cell.style.gridColumn = (d+2);
+
+      const row = document.createElement("div");
+      row.className = "mini-allday-row";
+      cell.appendChild(row);
+
+      dd.allday.forEach(e => {
+        const a = document.createElement("div");
+        a.className = "mini-allday";
+        a.textContent = e.subject;
+        const cat = categoryColorOrNull(e);
+        if (cat) a.style.background = cat;
+        row.appendChild(a);
+      });
+
+      miniWeek.appendChild(cell);
+    });
+
+    // Row 4: Stundenleiste + Tagesspalten
     const hoursCol = document.createElement("div");
     hoursCol.className = "mini-hours";
     for (let h = START_HOUR; h < END_HOUR; h++){
@@ -418,45 +540,16 @@ function renderFourWeeks(events){
     }
     miniWeek.appendChild(hoursCol);
 
-    // Day columns
-    for (let d = 0; d < 7; d++){
-      const date = new Date(monday); date.setDate(monday.getDate()+d);
-      const isToday = date.getTime() === today.getTime();
-
+    dayData.forEach((dd, d) => {
       const col = document.createElement("div");
-      col.className = "mini-day-col" + (isToday ? " today" : "");
+      col.className = "mini-day-col" + (dd.isToday ? " today" : "");
       col.style.gridColumn = (d+2);
-
-      const alldayRow = document.createElement("div");
-      alldayRow.className = "mini-allday-row";
-      col.appendChild(alldayRow);
 
       const inner = document.createElement("div");
       inner.className = "mini-day-col-inner";
       col.appendChild(inner);
 
-      const dayStart = new Date(date); dayStart.setHours(0,0,0,0);
-      const dayEnd   = new Date(date); dayEnd.setHours(23,59,59,999);
-
-      const enriched = events
-        .map(e => ({...e, _start: parseNaiveLocal(e.start), _end: parseNaiveLocal(e.end)}));
-
-      const allday = enriched.filter(e => e.isAllDay
-        && e._start < dayEnd && e._end > dayStart);
-
-      const timed = enriched.filter(e => !e.isAllDay
-        && e._start >= dayStart && e._start <= dayEnd);
-
-      allday.forEach(e => {
-        const a = document.createElement("div");
-        a.className = "mini-allday";
-        a.textContent = e.subject;
-        const cat = categoryColorOrNull(e);
-        if (cat) a.style.background = cat;
-        alldayRow.appendChild(a);
-      });
-
-      const laid = layoutColumns(timed);
+      const laid = layoutColumns(dd.timed);
 
       laid.forEach(e => {
         const s = e._start, en = e._end;
@@ -484,7 +577,7 @@ function renderFourWeeks(events){
         inner.appendChild(ev);
       });
 
-      if (isToday){
+      if (dd.isToday){
         const now = new Date();
         const frac = (now.getHours() + now.getMinutes()/60) - START_HOUR;
         if (frac >= 0 && frac <= HOURS){
@@ -496,7 +589,7 @@ function renderFourWeeks(events){
       }
 
       miniWeek.appendChild(col);
-    }
+    });
 
     container.appendChild(miniWeek);
   }
