@@ -14,8 +14,8 @@ Ein Raspberry Pi 4 zeigt im Vollbild-Modus den Wochenkalender des Ressourcenpost
 
 - **Aktuelle Woche** — Standardansicht mit 7-Tage-Kalender
 - **4-Wochen-Übersicht** — 4 Wochen als 2×2-Grid (je ein Viertel des Displays)
-- **2-Monats-Übersicht (aktuell + nächster Monat)** — Outlook-Stil, Kacheln pro Tag mit Termintiteln (ohne Zeit)
-- **2-Monats-Übersicht (übernächster + folgender Monat)** — gleicher Stil, Monate +2 und +3
+- **8-Wochen-Übersicht (Woche 1–8)** — rollend ab aktueller Woche, Outlook-Kachel-Stil, Termintitel ohne Zeit; Monatswechsel im Datum markiert
+- **8-Wochen-Übersicht (Woche 9–16)** — gleicher Stil, anschliessende 8 Wochen
 - **Pfeiltasten-Navigation** — Wechsel zwischen den Ansichten per Tastatur
 - **Kategorienfarben** — Termine farblich nach Outlook-Kategorie
 - **Live-Uhrzeit** und **"Jetzt"-Linie** im heutigen Tag
@@ -308,12 +308,12 @@ Deaktiviert Chromium-Features die im Kiosk-Modus stören (Übersetzung, Standard
 |---|---|
 | Aktuelle Woche | Standardansicht, Montag bis Sonntag der aktuellen Woche |
 | 4-Wochen-Übersicht | 4 Wochen als 2×2-Grid, je ein Viertel des Displays |
-| 2-Monats-Übersicht (Monat 1+2) | Outlook-Stil: aktueller + nächster Monat als Kacheln-Raster, Termintitel ohne Zeit |
-| 2-Monats-Übersicht (Monat 3+4) | Gleicher Stil, übernächster + folgender Monat |
+| 8-Wochen-Übersicht (W1–8) | Rollend ab aktueller Woche, 2 Blöcke à 4 Wochen, Outlook-Kachel-Stil. Termintitel ohne Zeit. Am 1. eines Monats wird der Monatsname im Datum mitangezeigt und farblich akzentuiert. |
+| 8-Wochen-Übersicht (W9–16) | Gleicher Stil, anschliessende 8 Wochen |
 
 ### Navigation (Pfeiltasten)
 
-- **Pfeiltaste rechts:** Aktuelle Woche → 4-Wochen → Monat 1+2 → Monat 3+4 → Aktuelle Woche
+- **Pfeiltaste rechts:** Aktuelle Woche → 4-Wochen → 8-Wochen (W1–8) → 8-Wochen (W9–16) → Aktuelle Woche
 - **Pfeiltaste links:** umgekehrte Reihenfolge
 
 Die aktuelle Ansicht wird im Header angezeigt.
