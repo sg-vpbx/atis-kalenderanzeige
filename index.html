@@ -13,12 +13,12 @@
   header { flex-shrink: 0; display: grid; grid-template-columns: 1fr auto 1fr;
            align-items: center; padding: 16px 32px;
            background: #ffffff; border-bottom: 2px solid #d0d0d0; }
-  header h1 { font-size: 40px; font-weight: 700; color: #1e1e2e; justify-self: start; }
+  header h1 { font-size: 34px; font-weight: 700; color: #1e1e2e; justify-self: start; }
   header .center { justify-self: center; text-align: center; }
   header .right { justify-self: end; text-align: right; }
-  header .clock { font-size: 36px; font-weight: 600; font-variant-numeric: tabular-nums; color: #1e1e2e; }
-  header .status { font-size: 15px; color: #666; }
-  header .view-label { font-size: 28px; font-weight: 700; color: #1e1e2e; }
+  header .clock { font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums; color: #1e1e2e; }
+  header .status { font-size: 13px; color: #666; }
+  header .view-label { font-size: 24px; font-weight: 700; color: #1e1e2e; }
 
   /* --- Tageszeit-Zonen (Hintergrund-Schraffur):
          06–08 (morgens), 12–13 (Mittag), 17–20 (abends) --- */
@@ -49,8 +49,8 @@
   .day-header { padding: 10px 6px; text-align: center; background: #ffffff;
                 border-bottom: 2px solid #d0d0d0; border-left: 1px solid #d0d0d0;
                 grid-row: 1; }
-  .day-header .name { font-weight: 700; font-size: 26px; color: #333; }
-  .day-header .date { font-size: 22px; color: #555; }
+  .day-header .name { font-weight: 700; font-size: 22px; color: #333; }
+  .day-header .date { font-size: 18px; color: #555; }
   .day-header.today .name { color: #2563eb; }
   .day-header.today .date { color: #2563eb; font-weight: 700; }
 
@@ -62,14 +62,14 @@
   .allday-row { display: flex; flex-direction: column; gap: 3px;
                 padding: 3px; height: 100%; }
   .allday { background: #f9e2af; color: #1e1e2e; padding: 3px 8px;
-            border-radius: 4px; font-size: 18px; font-weight: 700;
+            border-radius: 4px; font-size: 15px; font-weight: 700;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .allday-corner { grid-row: 2; grid-column: 1; background: #fafafa;
                    border-bottom: var(--allday-border, none); }
 
   .hours { grid-column: 1; grid-row: 3; display: grid;
            grid-template-rows: repeat(14, 1fr); }
-  .hour { font-size: 18px; color: #555; text-align: right; padding-right: 10px;
+  .hour { font-size: 15px; color: #555; text-align: right; padding-right: 10px;
           border-top: 1px solid #d0d0d0; }
 
   .day-col { display: flex; flex-direction: column;
@@ -77,7 +77,7 @@
   .day-col-inner { position: relative; flex: 1; }
   .day-col.today .day-col-inner { background-color: #eef4ff; }
 
-  .event { position: absolute; border-radius: 6px; padding: 5px 8px; font-size: 19px;
+  .event { position: absolute; border-radius: 6px; padding: 4px 7px; font-size: 16px;
            overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
            background: #89b4fa; color: #1e1e2e;
            border-left: 4px solid rgba(0,0,0,0.2);
@@ -85,8 +85,8 @@
   /* Titel: mehrzeilig, sofern Platz vorhanden ist; Rest wird abgeschnitten. */
   .event .subject { font-weight: 700; line-height: 1.2;
                     overflow-wrap: anywhere; overflow: hidden; }
-  .event .time { font-size: 16px; opacity: 0.85; flex-shrink: 0; }
-  .event .loc  { font-size: 16px; opacity: 0.75; line-height: 1.2;
+  .event .time { font-size: 14px; opacity: 0.85; flex-shrink: 0; }
+  .event .loc  { font-size: 14px; opacity: 0.75; line-height: 1.2;
                  overflow-wrap: anywhere; overflow: hidden; }
 
   .now-line { position: absolute; left: 0; right: 0; height: 2px;
@@ -105,15 +105,15 @@
                grid-template-rows: auto auto auto 1fr; border-radius: 4px; }
 
   .mini-week .week-title { grid-column: 1 / -1; grid-row: 1; padding: 5px 10px;
-                           font-size: 18px; font-weight: 700; background: #f0f0f0;
+                           font-size: 16px; font-weight: 700; background: #f0f0f0;
                            border-bottom: 1px solid #d0d0d0; color: #333; }
   .mini-week .week-title.current { background: #dbeafe; color: #1e40af; }
 
   .mini-week .mini-day-header { padding: 3px 2px; text-align: center; background: #fafafa;
                                 border-bottom: 1px solid #d0d0d0; border-left: 1px solid #e0e0e0;
                                 grid-row: 2; }
-  .mini-week .mini-day-header .name { font-weight: 700; font-size: 15px; color: #333; }
-  .mini-week .mini-day-header .date { font-size: 13px; color: #666; }
+  .mini-week .mini-day-header .name { font-weight: 700; font-size: 13px; color: #333; }
+  .mini-week .mini-day-header .date { font-size: 11px; color: #666; }
   .mini-week .mini-day-header.today .name,
   .mini-week .mini-day-header.today .date { color: #2563eb; }
 
@@ -127,7 +127,7 @@
                                   height: var(--mini-allday-height, 0); overflow: hidden; }
   .mini-week .mini-allday-row { display: flex; flex-direction: column; gap: 1px;
                                 padding: 1px; height: 100%; }
-  .mini-week .mini-allday { padding: 2px 4px; border-radius: 3px; font-size: 13px;
+  .mini-week .mini-allday { padding: 2px 4px; border-radius: 3px; font-size: 11px;
                             font-weight: 700; color: #1e1e2e; background: #f9e2af;
                             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .mini-week .mini-allday-corner { grid-column: 1; grid-row: 3; background: #fafafa;
@@ -135,7 +135,7 @@
 
   .mini-week .mini-hours { grid-column: 1; grid-row: 4; display: grid;
                            grid-template-rows: repeat(14, 1fr); }
-  .mini-week .mini-hours .hour { font-size: 13px; color: #888; text-align: right;
+  .mini-week .mini-hours .hour { font-size: 11px; color: #888; text-align: right;
                                   padding-right: 5px; border-top: 1px solid #e0e0e0; }
 
   .mini-week .mini-day-col { display: flex; flex-direction: column;
@@ -162,7 +162,7 @@
   .mini-week .mini-day-col.today .mini-day-col-inner { background-color: #f0f6ff; }
 
   .mini-week .mini-event { position: absolute; border-radius: 3px; padding: 2px 4px;
-                           font-size: 13px; overflow: hidden;
+                           font-size: 11px; overflow: hidden;
                            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
                            color: #1e1e2e; border-left: 2px solid rgba(0,0,0,0.2); }
   .mini-week .mini-event .subject { font-weight: 700; white-space: nowrap;
@@ -315,7 +315,7 @@ function renderWeek(events, weekOffset){
     if (allday.length > maxAllDay) maxAllDay = allday.length;
     dayData.push({date, isToday, allday, timed});
   }
-  const alldayPx = maxAllDay > 0 ? maxAllDay * 32 + 6 : 0;
+  const alldayPx = maxAllDay > 0 ? maxAllDay * 28 + 6 : 0;
   grid.style.setProperty("--allday-height", alldayPx + "px");
   grid.style.setProperty("--allday-border", maxAllDay > 0 ? "1px solid #d0d0d0" : "none");
 
@@ -475,7 +475,7 @@ function renderFourWeeks(events){
       if (allday.length > maxAllDay) maxAllDay = allday.length;
       dayData.push({date, isToday, allday, timed});
     }
-    const alldayPx = maxAllDay > 0 ? maxAllDay * 22 + 4 : 0;
+    const alldayPx = maxAllDay > 0 ? maxAllDay * 19 + 4 : 0;
     miniWeek.style.setProperty("--mini-allday-height", alldayPx + "px");
     miniWeek.style.setProperty("--mini-allday-border", maxAllDay > 0 ? "1px solid #e0e0e0" : "none");
 
