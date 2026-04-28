@@ -170,6 +170,53 @@
 
   .mini-week .mini-now-line { position: absolute; left: 0; right: 0; height: 2px;
                               background: #dc2626; z-index: 10; }
+
+  /* --- Two-month view (Outlook-Stil, zwei Monate nebeneinander) --- */
+  .month-container { flex: 1; min-height: 0; display: grid;
+                     grid-template-columns: 1fr 1fr;
+                     gap: 4px; padding: 4px; background: #e0e0e0; }
+
+  .mini-month { background: #fff; border-radius: 4px; overflow: hidden;
+                display: grid; grid-template-rows: auto auto 1fr; min-height: 0; }
+
+  .mini-month .month-title { padding: 6px 10px; font-size: 18px; font-weight: 700;
+                             background: #f0f0f0; color: #333;
+                             border-bottom: 1px solid #d0d0d0; text-align: center; }
+  .mini-month .month-title.current { background: #dbeafe; color: #1e40af; }
+
+  .mini-month .month-day-headers { display: grid; grid-template-columns: repeat(7, 1fr);
+                                    background: #fafafa;
+                                    border-bottom: 1px solid #d0d0d0; }
+  .mini-month .month-day-headers > div { padding: 4px 2px; text-align: center;
+                                          font-size: 14px; font-weight: 700; color: #333;
+                                          border-left: 1px solid #e0e0e0; }
+  .mini-month .month-day-headers > div:first-child { border-left: none; }
+
+  .mini-month .month-weeks { display: grid;
+                              grid-template-rows: repeat(var(--month-weeks, 6), 1fr);
+                              min-height: 0; }
+
+  .mini-month .month-week { display: grid; grid-template-columns: repeat(7, 1fr);
+                             border-top: 1px solid #e0e0e0; min-height: 0; }
+  .mini-month .month-week:first-child { border-top: none; }
+
+  .mini-month .month-day { border-left: 1px solid #e0e0e0; padding: 2px 3px;
+                            display: flex; flex-direction: column; gap: 1px;
+                            overflow: hidden; min-width: 0; min-height: 0; }
+  .mini-month .month-day:first-child { border-left: none; }
+  .mini-month .month-day.other-month { background: #f7f7f7; }
+  .mini-month .month-day.today { background: #eef4ff; }
+
+  .mini-month .month-day .day-num { font-size: 12px; font-weight: 700; color: #555;
+                                     flex-shrink: 0; }
+  .mini-month .month-day.today .day-num { color: #2563eb; }
+  .mini-month .month-day.other-month .day-num { color: #bbb; }
+
+  .mini-month .month-event { font-size: 11px; padding: 1px 4px; border-radius: 2px;
+                              background: #89b4fa; color: #1e1e2e;
+                              white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                              font-weight: 600; flex-shrink: 0; }
+  .mini-month .month-day.other-month .month-event { opacity: 0.55; }
 </style>
 </head>
 <body>
@@ -185,6 +232,7 @@
   </header>
   <div class="grid" id="grid"></div>
   <div class="four-week-container" id="fourWeekGrid" style="display:none;"></div>
+  <div class="month-container" id="monthGrid" style="display:none;"></div>
 
 <script>
 const START_HOUR = 6;
@@ -211,9 +259,8 @@ const CATEGORY_COLORS = {
 };
 
 // --- View state ---
-// 0 = current week, 1 = next week, 2 = four weeks
-const VIEWS = ["current", "next", "fourweek"];
-const VIEW_LABELS = ["Aktuelle Woche", "Nächste Woche", "4-Wochen-Übersicht"];
+// 0 = current week, 1 = four weeks, 2 = months 1+2 (this+next), 3 = months 3+4 (this+2 / this+3)
+const VIEWS = ["current", "fourweek", "month12", "month34"];
 let currentView = 0;
 
 function colorFor(event){
@@ -597,6 +644,104 @@ function renderFourWeeks(events){
   }
 }
 
+// --- Two-month rendering (Outlook-Stil, zwei Monate nebeneinander) ---
+function renderTwoMonths(events, monthOffset){
+  document.getElementById("grid").style.display = "none";
+  document.getElementById("grid").innerHTML = "";
+  document.getElementById("fourWeekGrid").style.display = "none";
+  document.getElementById("fourWeekGrid").innerHTML = "";
+  const container = document.getElementById("monthGrid");
+  container.style.display = "grid";
+  container.innerHTML = "";
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const baseDate = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+
+  const enriched = events.map(e =>
+    ({...e, _start: parseNaiveLocal(e.start), _end: parseNaiveLocal(e.end)}));
+
+  for (let m = 0; m < 2; m++){
+    const monthStart = new Date(baseDate.getFullYear(), baseDate.getMonth() + m, 1);
+    const monthEnd   = new Date(baseDate.getFullYear(), baseDate.getMonth() + m + 1, 0);
+
+    const gridStart = mondayOfWeek(monthStart);
+    const gridEnd   = mondayOfWeek(monthEnd);
+    gridEnd.setDate(gridEnd.getDate() + 6);
+
+    const numDays  = Math.round((gridEnd - gridStart) / 86400000) + 1;
+    const numWeeks = Math.round(numDays / 7);
+
+    const miniMonth = document.createElement("div");
+    miniMonth.className = "mini-month";
+    miniMonth.style.setProperty("--month-weeks", numWeeks);
+
+    const isCurrentMonth = (monthStart.getMonth() === today.getMonth()
+                            && monthStart.getFullYear() === today.getFullYear());
+    const title = document.createElement("div");
+    title.className = "month-title" + (isCurrentMonth ? " current" : "");
+    title.textContent = monthStart.toLocaleDateString("de-CH",
+      { month: "long", year: "numeric" });
+    miniMonth.appendChild(title);
+
+    const dayHeaders = document.createElement("div");
+    dayHeaders.className = "month-day-headers";
+    DAYS_DE.forEach(name => {
+      const h = document.createElement("div");
+      h.textContent = name;
+      dayHeaders.appendChild(h);
+    });
+    miniMonth.appendChild(dayHeaders);
+
+    const weeksDiv = document.createElement("div");
+    weeksDiv.className = "month-weeks";
+
+    for (let w = 0; w < numWeeks; w++){
+      const weekDiv = document.createElement("div");
+      weekDiv.className = "month-week";
+
+      for (let d = 0; d < 7; d++){
+        const date = new Date(gridStart);
+        date.setDate(gridStart.getDate() + w * 7 + d);
+        date.setHours(0,0,0,0);
+        const isOtherMonth = date.getMonth() !== monthStart.getMonth();
+        const isToday = date.getTime() === today.getTime();
+
+        const cell = document.createElement("div");
+        cell.className = "month-day"
+          + (isOtherMonth ? " other-month" : "")
+          + (isToday ? " today" : "");
+
+        const dayNum = document.createElement("div");
+        dayNum.className = "day-num";
+        dayNum.textContent = date.getDate();
+        cell.appendChild(dayNum);
+
+        const dStart = new Date(date);
+        const dEnd   = new Date(date); dEnd.setHours(23,59,59,999);
+        const dayEvents = enriched
+          .filter(e => e._start < dEnd && e._end > dStart)
+          .sort((a,b) => (b.isAllDay - a.isAllDay) || (a._start - b._start));
+
+        dayEvents.forEach(e => {
+          const ev = document.createElement("div");
+          ev.className = "month-event";
+          ev.textContent = e.subject;
+          const cat = categoryColorOrNull(e);
+          if (cat) ev.style.background = cat;
+          cell.appendChild(ev);
+        });
+
+        weekDiv.appendChild(cell);
+      }
+
+      weeksDiv.appendChild(weekDiv);
+    }
+
+    miniMonth.appendChild(weeksDiv);
+    container.appendChild(miniMonth);
+  }
+}
+
 function getISOWeek(date){
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
@@ -604,28 +749,59 @@ function getISOWeek(date){
   return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
 }
 
+// Liefert Wochen-Offset (relativ zu aktuellem Montag) und Wochen-Anzahl,
+// die nötig sind, um die Monats-Raster für [monthOffset, monthOffset+1] vollständig
+// abzudecken (inkl. der "fremden" Tage am Anfang/Ende der Wochenraster).
+function monthRangeAsWeeks(monthOffset){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const baseMonday = mondayOfWeek(today);
+
+  const monthStart = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+  const monthEnd   = new Date(today.getFullYear(), today.getMonth() + monthOffset + 2, 0);
+
+  const gridStart = mondayOfWeek(monthStart);
+  const gridEnd   = mondayOfWeek(monthEnd);
+  gridEnd.setDate(gridEnd.getDate() + 7); // +7: API-Endzeit ist exklusiv (Montag der Folgewoche)
+
+  const offsetWeeks = Math.round((gridStart - baseMonday) / (86400000 * 7));
+  const weekCount   = Math.round((gridEnd   - gridStart)  / (86400000 * 7));
+  return { offset: offsetWeeks, weeks: weekCount };
+}
+
 // --- Data loading ---
 async function load(){
   try {
-    let url, offset, weeks;
-    if (currentView === 0) { offset = 0; weeks = 1; }
-    else if (currentView === 1) { offset = 1; weeks = 1; }
-    else { offset = 0; weeks = 4; }
+    let offset, weeks;
+    if (currentView === 0)      { offset = 0; weeks = 1; }
+    else if (currentView === 1) { offset = 0; weeks = 4; }
+    else if (currentView === 2) { ({ offset, weeks } = monthRangeAsWeeks(0)); }
+    else                        { ({ offset, weeks } = monthRangeAsWeeks(2)); }
 
-    url = `/api/events?offset=${offset}&weeks=${weeks}`;
+    const url = `/api/events?offset=${offset}&weeks=${weeks}`;
     const r = await fetch(url);
     const data = await r.json();
     if (!data.ok) throw new Error(data.error);
 
-    if (currentView === 2){
+    if (currentView === 0){
+      document.getElementById("monthGrid").style.display = "none";
+      renderWeek(data.events, 0);
+      document.getElementById("viewLabel").textContent = "Aktuelle Woche";
+    } else if (currentView === 1){
+      document.getElementById("monthGrid").style.display = "none";
       renderFourWeeks(data.events);
+      document.getElementById("viewLabel").textContent = "4-Wochen-Übersicht";
     } else {
-      renderWeek(data.events, currentView === 1 ? 1 : 0);
+      const monthOffset = (currentView === 2) ? 0 : 2;
+      renderTwoMonths(data.events, monthOffset);
+      const today = new Date();
+      const m1 = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+      const m2 = new Date(today.getFullYear(), today.getMonth() + monthOffset + 1, 1);
+      const fmt = d => d.toLocaleDateString("de-CH", { month: "long", year: "numeric" });
+      document.getElementById("viewLabel").textContent = `${fmt(m1)} / ${fmt(m2)}`;
     }
 
     document.getElementById("status").textContent =
       "Aktualisiert: " + new Date().toLocaleTimeString("de-CH");
-    document.getElementById("viewLabel").textContent = VIEW_LABELS[currentView];
   } catch(err){
     document.getElementById("status").textContent = "Fehler: " + err.message;
   }
@@ -635,11 +811,11 @@ async function load(){
 document.addEventListener("keydown", function(e){
   if (e.key === "ArrowRight"){
     e.preventDefault();
-    currentView = (currentView + 1) % 3;
+    currentView = (currentView + 1) % VIEWS.length;
     load();
   } else if (e.key === "ArrowLeft"){
     e.preventDefault();
-    currentView = (currentView + 2) % 3;
+    currentView = (currentView + VIEWS.length - 1) % VIEWS.length;
     load();
   }
 });

@@ -49,7 +49,8 @@ def api_events():
     try:
         offset = int(request.args.get("offset", 0))
         weeks = int(request.args.get("weeks", 1))
-        weeks = max(1, min(weeks, 4))
+        # bis zu 16 Wochen, damit die Zwei-Monats-Ansicht (max. ~12 Wochen) abgedeckt ist
+        weeks = max(1, min(weeks, 16))
 
         token = get_token()
         start, end = get_week_range(offset=offset, weeks=weeks)
