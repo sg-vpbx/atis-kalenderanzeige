@@ -25,9 +25,13 @@ if ! command -v raspi-config &> /dev/null; then
 fi
 
 # --- Status prüfen ---
+# Live-Status (was gerade aktiv ist):  findmnt / → overlay = gesperrt
+# Config-Status (was nach Reboot gilt): cmdline.txt prüfen
+# Wir verwenden den Live-Status, da das die einzig zuverlässige Quelle ist:
+# auf manchen Pi-OS-Versionen wird overlay über initramfs gemountet, ohne
+# dass "boot=overlay" in cmdline.txt steht.
 get_status() {
-    if grep -q "boot=overlay" /boot/firmware/cmdline.txt 2>/dev/null || \
-       grep -q "boot=overlay" /boot/cmdline.txt 2>/dev/null; then
+    if [ "$(findmnt -no FSTYPE / 2>/dev/null)" = "overlay" ]; then
         echo "locked"
     else
         echo "unlocked"

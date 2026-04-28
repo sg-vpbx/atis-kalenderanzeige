@@ -42,9 +42,11 @@ if [ "$EUID" -eq 0 ]; then
 fi
 
 # --- Lock-Status prüfen ---
+# Wir prüfen den TATSÄCHLICH aktiven Mount, nicht nur die cmdline.txt-Config.
+# Wenn das Root-FS auf "overlay" läuft, gehen alle Änderungen beim Reboot verloren —
+# das ist die einzig zuverlässige Quelle der Wahrheit.
 get_lock_status() {
-    if grep -q "boot=overlay" /boot/firmware/cmdline.txt 2>/dev/null || \
-       grep -q "boot=overlay" /boot/cmdline.txt 2>/dev/null; then
+    if [ "$(findmnt -no FSTYPE / 2>/dev/null)" = "overlay" ]; then
         echo "locked"
     else
         echo "unlocked"
