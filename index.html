@@ -80,12 +80,14 @@
   .event { position: absolute; border-radius: 6px; padding: 5px 8px; font-size: 19px;
            overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
            background: #89b4fa; color: #1e1e2e;
-           border-left: 4px solid rgba(0,0,0,0.2); }
-  .event .subject { font-weight: 700; white-space: nowrap; overflow: hidden;
-                    text-overflow: ellipsis; }
-  .event .time { font-size: 16px; opacity: 0.85; }
-  .event .loc  { font-size: 16px; opacity: 0.75; white-space: nowrap;
-                 overflow: hidden; text-overflow: ellipsis; }
+           border-left: 4px solid rgba(0,0,0,0.2);
+           display: flex; flex-direction: column; }
+  /* Titel: mehrzeilig, sofern Platz vorhanden ist; Rest wird abgeschnitten. */
+  .event .subject { font-weight: 700; line-height: 1.2;
+                    overflow-wrap: anywhere; overflow: hidden; }
+  .event .time { font-size: 16px; opacity: 0.85; flex-shrink: 0; }
+  .event .loc  { font-size: 16px; opacity: 0.75; line-height: 1.2;
+                 overflow-wrap: anywhere; overflow: hidden; }
 
   .now-line { position: absolute; left: 0; right: 0; height: 2px;
               background: #dc2626; z-index: 10; }
